@@ -1,0 +1,90 @@
+name: Fetch Google Reviews and Deploy
+
+on:
+  schedule:
+    # Run daily at 9:00 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      business_slug:
+        description: 'Business slug to fetch (optional, fetches all if empty)'
+        required: false
+        type: string
+
+jobs:
+  fetch-reviews:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Fetch Google Reviews
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.business_slug }}" ]; then
+            node fetch-google-reviews.js "${{ github.event.inputs.business_slug }}"
+          else
+            node fetch-google-reviews.js
+          fi
+
+      - name: Render iframes
+        run: |
+          if [ -n "${{ github.event.inputs.business_slug }}" ]; then
+            node render-iframes.js "${{ github.event.inputs.business_slug }}"
+          else
+            node render-iframes.js
+          fi
+
+      - name: Check for changes
+        id: verify-changed-files
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add reviews/ config.json
+          if [ -n "${{ github.event.inputs.business_slug }}" ]; then
+            git commit -m "Auto-update: Fetch new Google reviews for ${{ github.event.inputs.business_slug }}"
+          else
+            git commit -m "Auto-update: Fetch new Google reviews"
+          fi
+          git push
+
+      - name: Checkout latest code
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to Bunny
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        uses: R-J-dev/bunny-deploy@v2.0.6
+        with:
+          access-key: ${{ secrets.BUNNY_ACCESS_KEY }}
+          directory-to-upload: reviews/
+          storage-endpoint: "https://storage.bunnycdn.com"
+          storage-zone-name: "reviews-embeds"
+          storage-zone-password: ${{ secrets.BUNNY_STORAGE_ZONE_PASSWORD }}
+          concurrency: "5"
+          enable-delete-action: true
+          enable-purge-pull-zone: true
+          pull-zone-id: "4850634"
+          replication-timeout: "15000"

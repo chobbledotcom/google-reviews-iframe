@@ -1,0 +1,46 @@
+# Google Review Fetcher
+
+A script which uses a Github action and an Apify API key to periodically fetch Google reviews, store them as JSON files, and then pre-generate static websites displaying the reviews, for display in an iframe.
+
+# Contents
+
+## config.json
+
+The configuration for the script. An array of businesses to fetch and their settings, like:
+
+{
+  google_business_id: "ABC123",
+  slug: "business-name"
+  number_of_reviews: -1,
+  minimum_star_rating: 0,
+  fetch_frequency_days: 7,
+  last_fetched: "1970-01-01 00:00:00"
+}
+
+## fetch-google-reviews.js
+
+The script that does the fetching work. This will save the reviews to files like:
+
+./reviews/<business_slug>/<review_id>.json
+
+It can be called with a single slug to fetch that, or no slug to render them all
+
+## render-iframes.js
+
+A script that uses HAML to render the HTML for each review, to files at:
+
+./reviews/<business_slug>/index.html
+
+It can be called with a single slug to just render that, or no slug to render them all
+
+## iframe-layout.haml
+
+The iframe layout, which will have in-line CSS and SVGs and be responsive, so all of the information is delivered in a single HTML request
+
+Reviews will be a single column on mobile, and on desktop will fit as many as they can with each review being minimum 50rem but they always being even per-line so it's always neat. This should allow the iframe to be responsive.
+
+## .github/workflows/fetch-google-reviews.yml
+
+A workflow that runs daily. For each site where the difference between last_fetched and today is more than or equal to fetch_frequncy_days, it fetches the Google reviews and updates last_fetched to now, and then runs render-iframes.js
+
+The workflow can also be called manually, with the potential to pass one of the slugs as an argument to just refresh that business

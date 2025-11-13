@@ -1,0 +1,22 @@
+{
+  "name": "google-reviews-frame",
+  "version": "1.0.0",
+  "description": "Fetch Google reviews and generate static iframe displays",
+  "main": "fetch-google-reviews.js",
+  "scripts": {
+    "fetch": "node fetch-google-reviews.js",
+    "render": "node render-iframes.js",
+    "test": "npm run fetch && npm run render"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "google-reviews",
+    "iframe",
+    "static-site"
+  ],
+  "author": "",
+  "license": "MIT"
+}

@@ -76,13 +76,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create HTML-only directory for deployment
-        if: steps.verify-changed-files.outputs.changed == 'true'
         run: |
           mkdir -p deploy-html
           find reviews/ -name "*.html" -exec cp --parents {} deploy-html/ \;
 
       - name: Deploy to Bunny
-        if: steps.verify-changed-files.outputs.changed == 'true'
         uses: R-J-dev/bunny-deploy@v2.0.6
         with:
           access-key: ${{ secrets.BUNNY_ACCESS_KEY }}

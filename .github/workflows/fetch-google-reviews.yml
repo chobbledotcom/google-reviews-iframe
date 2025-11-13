@@ -75,16 +75,16 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create HTML-only directory for deployment
+      - name: Create deploy directory
         run: |
-          mkdir -p deploy-html
-          find reviews/ -name "*.html" -exec cp --parents {} deploy-html/ \;
+          mkdir -p deploy
+          find reviews/ -name "*.html" -exec cp --parents {} deploy/ \;
 
       - name: Deploy to Bunny
         uses: R-J-dev/bunny-deploy@v2.0.6
         with:
           access-key: ${{ secrets.BUNNY_ACCESS_KEY }}
-          directory-to-upload: deploy-html/
+          directory-to-upload: deploy/
           storage-endpoint: "https://storage.bunnycdn.com"
           storage-zone-name: "reviews-embeds"
           storage-zone-password: ${{ secrets.BUNNY_STORAGE_ZONE_PASSWORD }}

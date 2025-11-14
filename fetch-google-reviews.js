@@ -67,31 +67,6 @@ function getLatestReviewDate(businessDir) {
   return latestDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
 }
 
-  const reviewFiles = fs.readdirSync(businessDir)
-    .filter(file => file.endsWith('.json'))
-    .map(file => {
-      try {
-        const content = fs.readFileSync(path.join(businessDir, file), 'utf8');
-        const review = JSON.parse(content);
-        return new Date(review.date);
-      } catch (error) {
-        console.warn(`Error reading ${file}: ${error.message}`);
-        return null;
-      }
-    })
-    .filter(date => date !== null && !isNaN(date));
-
-  if (reviewFiles.length === 0) {
-    return null;
-  }
-
-  // Return the earliest date (oldest review)
-  const earliestDate = new Date(Math.min(...reviewFiles));
-  // Add one day buffer to ensure we don't miss reviews from the same day
-  earliestDate.setDate(earliestDate.getDate() - 1);
-  return earliestDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-}
-
 function makeApiRequest(url, data) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);

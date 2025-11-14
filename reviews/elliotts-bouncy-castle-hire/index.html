@@ -50,6 +50,8 @@
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
+        width: 450px;
+        margin-bottom: 20px;
       }
 
       .review-header {
@@ -146,13 +148,20 @@
     <script>
       {
         {
+          MASONRY_SCRIPT;
+        }
+      }
+    </script>
+    <script>
+      {
+        {
           IFRAME_RESIZER_SCRIPT;
         }
       }
     </script>
   </head>
   <body>
-    <div class="reviews-container">
+    <div class="reviews-container" data-masonry='{ "itemSelector": ".review-card", "columnWidth": 450 }'>
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar">CM</div>

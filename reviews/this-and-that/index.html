@@ -22,25 +22,13 @@
       }
 
       .reviews-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
-        gap: 20px;
         max-width: 100%;
         margin: 0 auto;
       }
 
       @media (max-device-width: 768px) {
-        .reviews-container {
-          gap: 15px;
-        }
         body {
           padding: 10px;
-        }
-      }
-
-      @media (max-device-width: 550px) {
-        .reviews-container {
-          grid-template-columns: 1fr;
         }
       }
 
@@ -181,7 +169,7 @@
     </script>
   </head>
   <body>
-    <div class="reviews-container" data-masonry='{ "itemSelector": ".review-card", "columnWidth": 450 }'>
+    <div class="reviews-container" data-masonry='{ "itemSelector": ".review-card", "columnWidth": 450, "gutter": 10 }'>
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar">NA</div>

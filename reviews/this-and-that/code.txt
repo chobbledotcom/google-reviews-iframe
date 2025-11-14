@@ -1,5 +1,5 @@
 <!-- Google Reviews Embed Code for this-and-that -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.min.js"></script>
+<script async defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.min.js"></script>
 <script>
   iFrameResize({
     log: false,
@@ -10,7 +10,7 @@
 <iframe 
   id="google-reviews-iframe"
   src="https://reviews-embeds.chobble.com/this-and-that/"
-  style="width: 1px; min-width: 100%; border: none; overflow: hidden;"
+  style="width: 100%; margin: 2rem 0; padding:0; border: none; overflow: hidden;"
   scrolling="no"
   frameborder="0"
 ></iframe>

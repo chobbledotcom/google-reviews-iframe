@@ -144,8 +144,41 @@
     <script>
       {{IFRAME_RESIZER_SCRIPT}}
     </script>
+    <script>
+      // Initialize Masonry only if viewport width > 600px
+      (function() {
+        var msnry = null;
+        
+        function initMasonry() {
+          if (window.innerWidth > 600) {
+            if (!msnry) {
+              msnry = new Masonry('.reviews-container', {
+                columnWidth: 450,
+                itemSelector: '.review-card',
+                gutter: 10
+              });
+            }
+          } else {
+            if (msnry) {
+              msnry.destroy();
+              msnry = null;
+            }
+          }
+        }
+        
+        // Initialize on load
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initMasonry);
+        } else {
+          initMasonry();
+        }
+        
+        // Re-initialize on resize
+        window.addEventListener('resize', initMasonry);
+      })();
+    </script>
   </head>
   <body>
-    <div class="reviews-container" data-masonry='{ "itemSelector": ".review-card", "columnWidth": 450, "gutter": 20 }'>{{REVIEWS_HTML}}</div>
+    <div class="reviews-container">{{REVIEWS_HTML}}</div>
   </body>
 </html>

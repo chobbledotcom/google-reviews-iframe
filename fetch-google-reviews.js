@@ -37,10 +37,35 @@ function formatFilename(name, date) {
   return `${safeName}-${safeDate}.json`;
 }
 
-function getEarliestReviewDate(businessDir) {
+function getLatestReviewDate(businessDir) {
   if (!fs.existsSync(businessDir)) {
     return null;
   }
+
+  const reviewFiles = fs.readdirSync(businessDir)
+    .filter(file => file.endsWith('.json'))
+    .map(file => {
+      try {
+        const content = fs.readFileSync(path.join(businessDir, file), 'utf8');
+        const review = JSON.parse(content);
+        return new Date(review.date);
+      } catch (error) {
+        console.warn(`Error reading ${file}: ${error.message}`);
+        return null;
+      }
+    })
+    .filter(date => date !== null && !isNaN(date));
+
+  if (reviewFiles.length === 0) {
+    return null;
+  }
+
+  // Return latest date (most recent review)
+  const latestDate = new Date(Math.max(...reviewFiles));
+  // Add one day buffer to ensure we don't miss reviews from the same day
+  latestDate.setDate(latestDate.getDate() + 1);
+  return latestDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+}
 
   const reviewFiles = fs.readdirSync(businessDir)
     .filter(file => file.endsWith('.json'))
@@ -115,7 +140,7 @@ async function fetchReviews(placeId, options = {}) {
   // Add reviewsStartDate if provided
   if (options.reviewsStartDate) {
     data.reviewsStartDate = options.reviewsStartDate;
-    console.log(`Fetching reviews from ${options.reviewsStartDate} onwards...`);
+    console.log(`Fetching reviews newer than ${options.reviewsStartDate}...`);
   } else {
     console.log(`Fetching all available reviews...`);
   }
@@ -205,13 +230,13 @@ async function main() {
       const businessDir = path.join(CONFIG.reviewsDir, business.slug);
       fs.mkdirSync(businessDir, { recursive: true });
 
-      // Get earliest review date to avoid re-scraping existing reviews
-      const earliestDate = getEarliestReviewDate(businessDir);
+      // Get latest review date to fetch only newer reviews
+      const latestDate = getLatestReviewDate(businessDir);
       
       // Fetch and save reviews
       const reviews = await fetchReviews(business.google_business_id, {
         maxReviews: business.number_of_reviews === -1 ? CONFIG.maxReviews : business.number_of_reviews,
-        reviewsStartDate: earliestDate
+        reviewsStartDate: latestDate
       });
 
       // Filter by minimum star rating

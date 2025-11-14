@@ -78,7 +78,7 @@ jobs:
       - name: Create deploy directory
         run: |
           mkdir -p deploy
-          find reviews/ -name "*.html" -exec cp --parents {} deploy/ \;
+          find reviews/ -name "*.html" -o -name "*.txt" -exec cp --parents {} deploy/ \;
 
       - name: Deploy to Bunny
         uses: R-J-dev/bunny-deploy@v2.0.6

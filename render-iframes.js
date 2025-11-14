@@ -91,7 +91,7 @@ function generateReviewsHtml(reviews) {
             </div>
           </div>
         </div>
-        <div class="review-content">${review.content}</div>
+        <div class="review-content">${review.content || ''}</div>
       </div>
     `;
 		})

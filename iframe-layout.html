@@ -38,7 +38,7 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
         width: 450px;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
       }
 
       @media (max-device-width: 768px) {
@@ -146,16 +146,16 @@
     </script>
     <script>
       // Initialize Masonry only if viewport width > 600px
-      (function() {
+      (function () {
         var msnry = null;
-        
+
         function initMasonry() {
           if (window.innerWidth > 600) {
             if (!msnry) {
-              msnry = new Masonry('.reviews-container', {
+              msnry = new Masonry(".reviews-container", {
                 columnWidth: 450,
-                itemSelector: '.review-card',
-                gutter: 10
+                itemSelector: ".review-card",
+                gutter: 10,
               });
             }
           } else {
@@ -165,16 +165,16 @@
             }
           }
         }
-        
+
         // Initialize on load
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initMasonry);
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", initMasonry);
         } else {
           initMasonry();
         }
-        
+
         // Re-initialize on resize
-        window.addEventListener('resize', initMasonry);
+        window.addEventListener("resize", initMasonry);
       })();
     </script>
   </head>

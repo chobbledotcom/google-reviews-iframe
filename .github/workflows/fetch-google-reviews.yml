@@ -79,7 +79,7 @@ jobs:
         run: |
           mkdir -p deploy
           rsync -av --exclude="*.json" reviews/ deploy/
-          cp reviews-embed.js deploy/
+          cp reviews-embed.js deploy/js
 
       - name: Deploy to Bunny
         uses: R-J-dev/bunny-deploy@v2.0.6

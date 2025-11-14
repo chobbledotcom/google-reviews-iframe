@@ -25,8 +25,8 @@
  */
 (function () {
 	function initReviewsIframes() {
-		if (typeof iFrameResize === "undefined") {
-			console.warn("iFrameResize not loaded yet, retrying...");
+		if (typeof iframeResize === "undefined") {
+			console.warn("iframeResize not loaded yet, retrying...");
 			return;
 		}
 
@@ -36,11 +36,10 @@
 			return;
 		}
 
-		iFrameResize(
+		iframeResize(
 			{
 				log: false,
 				checkOrigin: false,
-				heightCalculationMethod: "documentElementOffset",
 				license: "GPLv3",
 			},
 			".google-reviews-iframe",

@@ -78,7 +78,7 @@ jobs:
       - name: Create deploy directory
         run: |
           mkdir -p deploy
-          rsync -av --exclude="*.json" reviews/ deploy/
+          rsync -av --exclude="*.json" reviews deploy/
 
       - name: Deploy to Bunny
         uses: R-J-dev/bunny-deploy@v2.0.6

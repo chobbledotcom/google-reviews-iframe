@@ -106,11 +106,16 @@ function generateHtml(reviews, businessSlug) {
 	// Read HTML template
 	const template = fs.readFileSync(CONFIG.templatePath, "utf8");
 
+	// Read iframe resizer child script
+	const childScriptPath = path.join(__dirname, "iframe-resizer.child.js");
+	const childScript = fs.readFileSync(childScriptPath, "utf8");
+
 	// Generate reviews HTML
 	const reviewsHtml = generateReviewsHtml(reviews);
 
-	// Replace placeholder with reviews HTML
-	const html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
+	// Replace placeholders
+	let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
+	html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
 	return html;
 }

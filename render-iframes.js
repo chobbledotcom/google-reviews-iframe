@@ -119,16 +119,9 @@ function generateEmbedCode(businessSlug) {
 	const iframeUrl = `https://reviews-embeds.chobble.com/${businessSlug}/`;
 
 	return `<!-- Google Reviews Embed Code for ${businessSlug} -->
-<script async defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.min.js"></script>
-<script>
-  iFrameResize({
-    log: false,
-    checkOrigin: false,
-    heightCalculationMethod: 'documentElementOffset'
-  }, '#google-reviews-iframe');
-</script>
+<script async defer src="https://reviews-embeds.chobble.com/reviews-embed.js"></script>
 <iframe 
-  id="google-reviews-iframe"
+  class="google-reviews-iframe"
   src="${iframeUrl}"
   style="width: 100%; margin: 2rem 0; padding:0; border: none; overflow: hidden;"
   scrolling="no"

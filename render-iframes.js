@@ -106,6 +106,10 @@ function generateHtml(reviews, businessSlug) {
 	// Read HTML template
 	const template = fs.readFileSync(CONFIG.templatePath, "utf8");
 
+	// Read Masonry script
+	const masonryScriptPath = path.join(__dirname, "masonry.pkgd.min.js");
+	const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
+
 	// Read iframe resizer child script
 	const childScriptPath = path.join(__dirname, "iframe-resizer.child.js");
 	const childScript = fs.readFileSync(childScriptPath, "utf8");
@@ -115,6 +119,7 @@ function generateHtml(reviews, businessSlug) {
 
 	// Replace placeholders
 	let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
+	html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
 	html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
 	return html;

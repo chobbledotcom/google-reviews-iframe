@@ -37,6 +37,36 @@ function formatFilename(name, date) {
   return `${safeName}-${safeDate}.json`;
 }
 
+function getEarliestReviewDate(businessDir) {
+  if (!fs.existsSync(businessDir)) {
+    return null;
+  }
+
+  const reviewFiles = fs.readdirSync(businessDir)
+    .filter(file => file.endsWith('.json'))
+    .map(file => {
+      try {
+        const content = fs.readFileSync(path.join(businessDir, file), 'utf8');
+        const review = JSON.parse(content);
+        return new Date(review.date);
+      } catch (error) {
+        console.warn(`Error reading ${file}: ${error.message}`);
+        return null;
+      }
+    })
+    .filter(date => date !== null && !isNaN(date));
+
+  if (reviewFiles.length === 0) {
+    return null;
+  }
+
+  // Return the earliest date (oldest review)
+  const earliestDate = new Date(Math.min(...reviewFiles));
+  // Add one day buffer to ensure we don't miss reviews from the same day
+  earliestDate.setDate(earliestDate.getDate() - 1);
+  return earliestDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+}
+
 function makeApiRequest(url, data) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -63,7 +93,7 @@ function makeApiRequest(url, data) {
     });
 
     request.on('error', reject);
-    request.setTimeout(60000, () => {
+    request.setTimeout(1200000, () => {
       request.destroy();
       reject(new Error('Request timeout'));
     });
@@ -82,7 +112,13 @@ async function fetchReviews(placeId, options = {}) {
     language: options.language || 'en'
   };
 
-  console.log(`Fetching all available reviews...`);
+  // Add reviewsStartDate if provided
+  if (options.reviewsStartDate) {
+    data.reviewsStartDate = options.reviewsStartDate;
+    console.log(`Fetching reviews from ${options.reviewsStartDate} onwards...`);
+  } else {
+    console.log(`Fetching all available reviews...`);
+  }
 
   const response = await makeApiRequest(url, data);
   const results = JSON.parse(response);
@@ -169,9 +205,13 @@ async function main() {
       const businessDir = path.join(CONFIG.reviewsDir, business.slug);
       fs.mkdirSync(businessDir, { recursive: true });
 
+      // Get earliest review date to avoid re-scraping existing reviews
+      const earliestDate = getEarliestReviewDate(businessDir);
+      
       // Fetch and save reviews
       const reviews = await fetchReviews(business.google_business_id, {
-        maxReviews: business.number_of_reviews === -1 ? CONFIG.maxReviews : business.number_of_reviews
+        maxReviews: business.number_of_reviews === -1 ? CONFIG.maxReviews : business.number_of_reviews,
+        reviewsStartDate: earliestDate
       });
 
       // Filter by minimum star rating

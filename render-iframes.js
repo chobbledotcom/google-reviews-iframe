@@ -1,82 +1,85 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const CONFIG = {
-  configPath: path.join(__dirname, 'config.json'),
-  reviewsDir: path.join(__dirname, 'reviews'),
-  templatePath: path.join(__dirname, 'iframe-layout.html')
+	configPath: path.join(__dirname, "config.json"),
+	reviewsDir: path.join(__dirname, "reviews"),
+	templatePath: path.join(__dirname, "iframe-layout.html"),
 };
 
 function loadReviews(businessSlug) {
-  const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
-  
-  if (!fs.existsSync(businessDir)) {
-    console.warn(`No reviews directory found for ${businessSlug}`);
-    return [];
-  }
+	const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
 
-  const reviewFiles = fs.readdirSync(businessDir)
-    .filter(file => file.endsWith('.json'))
-    .map(file => {
-      try {
-        const content = fs.readFileSync(path.join(businessDir, file), 'utf8');
-        return JSON.parse(content);
-      } catch (error) {
-        console.warn(`Error reading ${file}: ${error.message}`);
-        return null;
-      }
-    })
-    .filter(review => review !== null)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+	if (!fs.existsSync(businessDir)) {
+		console.warn(`No reviews directory found for ${businessSlug}`);
+		return [];
+	}
 
-  return reviewFiles;
+	const reviewFiles = fs
+		.readdirSync(businessDir)
+		.filter((file) => file.endsWith(".json"))
+		.map((file) => {
+			try {
+				const content = fs.readFileSync(path.join(businessDir, file), "utf8");
+				return JSON.parse(content);
+			} catch (error) {
+				console.warn(`Error reading ${file}: ${error.message}`);
+				return null;
+			}
+		})
+		.filter((review) => review !== null)
+		.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+	return reviewFiles;
 }
 
 function generateReviewsHtml(reviews) {
-  if (!reviews || reviews.length === 0) {
-    return '<div class="no-reviews">No reviews available.</div>';
-  }
+	if (!reviews || reviews.length === 0) {
+		return '<div class="no-reviews">No reviews available.</div>';
+	}
 
-  function getInitials(name) {
-    return name.split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  }
+	function getInitials(name) {
+		return name
+			.split(" ")
+			.map((word) => word.charAt(0))
+			.join("")
+			.toUpperCase()
+			.substring(0, 2);
+	}
 
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  }
+	function formatDate(dateString) {
+		const date = new Date(dateString);
+		const now = new Date();
+		const diffTime = Math.abs(now - date);
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  function renderStars(rating) {
-    let stars = '';
-    for (let i = 1; i <= 5; i++) {
-      const filled = i <= rating ? 'filled' : 'empty';
-      stars += `<span class="star ${filled}">★</span>`;
-    }
-    return `<div class="star-rating">${stars}</div>`;
-  }
+		if (diffDays === 0) return "Today";
+		if (diffDays === 1) return "Yesterday";
+		if (diffDays < 7) return `${diffDays} days ago`;
+		if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+		if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+		return `${Math.floor(diffDays / 365)} years ago`;
+	}
 
-  return reviews.map(review => {
-    const initials = getInitials(review.author);
-    const authorLink = review.authorUrl 
-      ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
-      : review.author;
-    
-    return `
+	function renderStars(rating) {
+		let stars = "";
+		for (let i = 1; i <= 5; i++) {
+			const filled = i <= rating ? "filled" : "empty";
+			stars += `<span class="star ${filled}">★</span>`;
+		}
+		return `<div class="star-rating">${stars}</div>`;
+	}
+
+	return reviews
+		.map((review) => {
+			const initials = getInitials(review.author);
+			const authorLink = review.authorUrl
+				? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
+				: review.author;
+
+			return `
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar">${initials}</div>
@@ -91,83 +94,110 @@ function generateReviewsHtml(reviews) {
         <div class="review-content">${review.content}</div>
       </div>
     `;
-  }).join('');
+		})
+		.join("");
 }
 
 function generateHtml(reviews, businessSlug) {
-  if (!fs.existsSync(CONFIG.templatePath)) {
-    throw new Error(`Template file not found: ${CONFIG.templatePath}`);
-  }
+	if (!fs.existsSync(CONFIG.templatePath)) {
+		throw new Error(`Template file not found: ${CONFIG.templatePath}`);
+	}
 
-  // Read HTML template
-  const template = fs.readFileSync(CONFIG.templatePath, 'utf8');
+	// Read HTML template
+	const template = fs.readFileSync(CONFIG.templatePath, "utf8");
 
-  // Generate reviews HTML
-  const reviewsHtml = generateReviewsHtml(reviews);
+	// Generate reviews HTML
+	const reviewsHtml = generateReviewsHtml(reviews);
 
-  // Replace placeholder with reviews HTML
-  const html = template.replace('{{REVIEWS_HTML}}', reviewsHtml);
+	// Replace placeholder with reviews HTML
+	const html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
 
-  return html;
+	return html;
+}
+
+function generateEmbedCode(businessSlug) {
+	const iframeUrl = `https://reviews-embeds.chobble.com/${businessSlug}/`;
+
+	return `<!-- Google Reviews Embed Code for ${businessSlug} -->
+<script async defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.min.js"></script>
+<script>
+  iFrameResize({
+    log: false,
+    checkOrigin: false,
+    heightCalculationMethod: 'documentElementOffset'
+  }, '#google-reviews-iframe');
+</script>
+<iframe 
+  id="google-reviews-iframe"
+  src="${iframeUrl}"
+  style="width: 100%; margin: 2rem 0; padding:0; border: none; overflow: hidden;"
+  scrolling="no"
+  frameborder="0"
+></iframe>`;
 }
 
 function renderBusiness(businessSlug) {
-  console.log(`Rendering reviews for ${businessSlug}...`);
-  
-  const reviews = loadReviews(businessSlug);
-  
-  if (reviews.length === 0) {
-    console.log(`No reviews found for ${businessSlug}`);
-    return;
-  }
+	console.log(`Rendering reviews for ${businessSlug}...`);
 
-  console.log(`Found ${reviews.length} reviews for ${businessSlug}`);
+	const reviews = loadReviews(businessSlug);
 
-  try {
-    const html = generateHtml(reviews, businessSlug);
-    
-    const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
-    fs.mkdirSync(businessDir, { recursive: true });
-    
-    const outputPath = path.join(businessDir, 'index.html');
-    fs.writeFileSync(outputPath, html);
-    
-    console.log(`✓ Generated ${outputPath}`);
-  } catch (error) {
-    console.error(`Error rendering ${businessSlug}:`, error.message);
-  }
+	if (reviews.length === 0) {
+		console.log(`No reviews found for ${businessSlug}`);
+		return;
+	}
+
+	console.log(`Found ${reviews.length} reviews for ${businessSlug}`);
+
+	try {
+		const html = generateHtml(reviews, businessSlug);
+
+		const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
+		fs.mkdirSync(businessDir, { recursive: true });
+
+		const htmlPath = path.join(businessDir, "index.html");
+		fs.writeFileSync(htmlPath, html);
+
+		const embedCode = generateEmbedCode(businessSlug);
+		const codePath = path.join(businessDir, "code.txt");
+		fs.writeFileSync(codePath, embedCode);
+
+		console.log(`✓ Generated ${htmlPath}`);
+		console.log(`✓ Generated ${codePath}`);
+	} catch (error) {
+		console.error(`Error rendering ${businessSlug}:`, error.message);
+	}
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  const targetSlug = args[0];
+	const args = process.argv.slice(2);
+	const targetSlug = args[0];
 
-  if (!fs.existsSync(CONFIG.configPath)) {
-    console.error(`Error: ${CONFIG.configPath} not found`);
-    process.exit(1);
-  }
+	if (!fs.existsSync(CONFIG.configPath)) {
+		console.error(`Error: ${CONFIG.configPath} not found`);
+		process.exit(1);
+	}
 
-  const config = JSON.parse(fs.readFileSync(CONFIG.configPath, 'utf8'));
-  
-  if (targetSlug) {
-    // Render specific business
-    const business = config.find(b => b.slug === targetSlug);
-    if (!business) {
-      console.error(`Business with slug "${targetSlug}" not found in config`);
-      process.exit(1);
-    }
-    renderBusiness(targetSlug);
-  } else {
-    // Render all businesses
-    console.log('Rendering all businesses...');
-    for (const business of config) {
-      renderBusiness(business.slug);
-    }
-  }
+	const config = JSON.parse(fs.readFileSync(CONFIG.configPath, "utf8"));
 
-  console.log('\nRendering complete!');
+	if (targetSlug) {
+		// Render specific business
+		const business = config.find((b) => b.slug === targetSlug);
+		if (!business) {
+			console.error(`Business with slug "${targetSlug}" not found in config`);
+			process.exit(1);
+		}
+		renderBusiness(targetSlug);
+	} else {
+		// Render all businesses
+		console.log("Rendering all businesses...");
+		for (const business of config) {
+			renderBusiness(business.slug);
+		}
+	}
+
+	console.log("\nRendering complete!");
 }
 
 if (require.main === module) {
-  main();
+	main();
 }

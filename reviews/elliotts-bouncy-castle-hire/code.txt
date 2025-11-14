@@ -1,0 +1,16 @@
+<!-- Google Reviews Embed Code for elliotts-bouncy-castle-hire -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.min.js"></script>
+<script>
+  iFrameResize({
+    log: false,
+    checkOrigin: false,
+    heightCalculationMethod: 'documentElementOffset'
+  }, '#google-reviews-iframe');
+</script>
+<iframe 
+  id="google-reviews-iframe"
+  src="https://reviews-embeds.chobble.com/elliotts-bouncy-castle-hire/"
+  style="width: 1px; min-width: 100%; border: none; overflow: hidden;"
+  scrolling="no"
+  frameborder="0"
+></iframe>

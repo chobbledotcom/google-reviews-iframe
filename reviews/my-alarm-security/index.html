@@ -21,7 +21,7 @@
     
     .reviews-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
       gap: 20px;
       max-width: 100%;
       margin: 0 auto;
@@ -29,11 +29,16 @@
     
     @media (max-width: 768px) {
       .reviews-container {
-        grid-template-columns: 1fr;
         gap: 15px;
       }
       body {
         padding: 10px;
+      }
+    }
+    
+    @media (max-width: 550px) {
+      .reviews-container {
+        grid-template-columns: 1fr;
       }
     }
     

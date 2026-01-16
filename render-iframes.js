@@ -81,7 +81,7 @@ function generateReviewsHtml(reviews) {
 
 			// Use thumbnail image if available, otherwise fall back to initials
 			const avatarContent = review.thumbnail
-				? `<img src="${review.thumbnail}" alt="${review.author}" class="review-avatar-img" onerror="this.parentElement.innerHTML='${initials}'">`
+				? `<img src="${review.thumbnail}" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`
 				: initials;
 
 			return `

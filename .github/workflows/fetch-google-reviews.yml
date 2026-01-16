@@ -80,6 +80,11 @@ jobs:
           mkdir -p deploy
           rsync -av --exclude="*.json" reviews/ deploy/
           cp reviews-embed.js deploy/js
+          # Copy reviewer thumbnails if they exist
+          if [ -d "images/reviewers" ]; then
+            mkdir -p deploy/images/reviewers
+            rsync -av images/reviewers/ deploy/images/reviewers/
+          fi
 
       - name: Deploy to Bunny
         uses: R-J-dev/bunny-deploy@v2.0.6

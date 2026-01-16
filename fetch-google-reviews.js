@@ -21,9 +21,75 @@ const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 const CONFIG = {
   configPath: path.join(__dirname, 'config.json'),
   reviewsDir: path.join(__dirname, 'reviews'),
+  imagesDir: path.join(__dirname, 'images', 'reviewers'),
   actorId: 'nwua9Gu5YrADL7ZDj',
   maxReviews: 9999 // Fetch all available reviews
 };
+
+// Extract user ID from Google Maps contributor URL
+function extractUserId(authorUrl) {
+  if (!authorUrl) return null;
+  const match = authorUrl.match(/\/contrib\/(\d+)/);
+  return match ? match[1] : null;
+}
+
+// Download image from URL and save locally
+function downloadImage(url, filepath) {
+  return new Promise((resolve, reject) => {
+    if (!url) {
+      resolve(false);
+      return;
+    }
+
+    // Ensure directory exists
+    const dir = path.dirname(filepath);
+    fs.mkdirSync(dir, { recursive: true });
+
+    // Skip if file already exists
+    if (fs.existsSync(filepath)) {
+      resolve(true);
+      return;
+    }
+
+    const urlObj = new URL(url);
+    const protocol = urlObj.protocol === 'https:' ? https : require('http');
+
+    const request = protocol.get(url, (response) => {
+      // Handle redirects
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        downloadImage(response.headers.location, filepath).then(resolve).catch(reject);
+        return;
+      }
+
+      if (response.statusCode !== 200) {
+        resolve(false);
+        return;
+      }
+
+      const fileStream = fs.createWriteStream(filepath);
+      response.pipe(fileStream);
+
+      fileStream.on('finish', () => {
+        fileStream.close();
+        resolve(true);
+      });
+
+      fileStream.on('error', (err) => {
+        fs.unlink(filepath, () => {}); // Delete partial file
+        resolve(false);
+      });
+    });
+
+    request.on('error', () => {
+      resolve(false);
+    });
+
+    request.setTimeout(30000, () => {
+      request.destroy();
+      resolve(false);
+    });
+  });
+}
 
 function formatFilename(name, date) {
   const safeName = (name || 'anonymous')
@@ -129,17 +195,22 @@ async function fetchReviews(placeId, options = {}) {
 
   return results
     .flatMap(item => item.reviews || [])
-    .map(review => ({
-      content: review.text || review.reviewText || '',
-      date: review.publishedAtDate ? new Date(review.publishedAtDate) : new Date(),
-      rating: review.stars || review.rating || 0,
-      author: review.name || review.authorName || 'Anonymous',
-      authorUrl: review.reviewerUrl || review.authorUrl || ''
-    }))
+    .map(review => {
+      const authorUrl = review.reviewerUrl || review.authorUrl || '';
+      return {
+        content: review.text || review.reviewText || '',
+        date: review.publishedAtDate ? new Date(review.publishedAtDate) : new Date(),
+        rating: review.stars || review.rating || 0,
+        author: review.name || review.authorName || 'Anonymous',
+        authorUrl: authorUrl,
+        photoUrl: review.reviewerPhotoUrl || review.userPhotoUrl || review.reviewerAvatar || '',
+        userId: extractUserId(authorUrl)
+      };
+    })
     .filter(review => review.content.length > 5);
 }
 
-function saveReview(review, outputDir) {
+async function saveReview(review, outputDir) {
   const filename = formatFilename(review.author, review.date);
   const filepath = path.join(outputDir, filename);
 
@@ -147,16 +218,30 @@ function saveReview(review, outputDir) {
     return false; // Skip existing
   }
 
+  // Download thumbnail if available
+  let thumbnailPath = null;
+  if (review.userId && review.photoUrl) {
+    const imageFilename = `${review.userId}.jpg`;
+    const imagePath = path.join(CONFIG.imagesDir, imageFilename);
+    const downloaded = await downloadImage(review.photoUrl, imagePath);
+    if (downloaded) {
+      thumbnailPath = `/images/reviewers/${imageFilename}`;
+    }
+  }
+
   const reviewData = {
     author: review.author,
     authorUrl: review.authorUrl,
     rating: review.rating || 5,
     content: review.content,
-    date: review.date.toISOString()
+    date: review.date.toISOString(),
+    userId: review.userId || null,
+    thumbnail: thumbnailPath
   };
 
   fs.writeFileSync(filepath, JSON.stringify(reviewData, null, 2));
-  console.log(`✓ ${filename} (${review.rating}/5 stars)`);
+  const thumbInfo = thumbnailPath ? ' [with thumbnail]' : '';
+  console.log(`✓ ${filename} (${review.rating}/5 stars)${thumbInfo}`);
   return true;
 }
 
@@ -218,9 +303,11 @@ async function main() {
       const filteredReviews = reviews.filter(review => review.rating >= business.minimum_star_rating);
       console.log(`Found ${reviews.length} reviews, ${filteredReviews.length} meet minimum rating of ${business.minimum_star_rating} stars`);
 
-      const saved = filteredReviews.reduce((count, review) =>
-        count + (saveReview(review, businessDir) ? 1 : 0), 0
-      );
+      let saved = 0;
+      for (const review of filteredReviews) {
+        const wasSaved = await saveReview(review, businessDir);
+        if (wasSaved) saved++;
+      }
 
       console.log(`Saved ${saved} new reviews (${filteredReviews.length - saved} already existed)`);
 

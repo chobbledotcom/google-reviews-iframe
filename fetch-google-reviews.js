@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const sharp = require('sharp');
 
 // Load environment variables
 const envPath = path.join(__dirname, '.env');
@@ -33,20 +34,22 @@ function extractUserId(authorUrl) {
   return match ? match[1] : null;
 }
 
-// Download image from URL and save locally
-function downloadImage(url, filepath) {
-  return new Promise((resolve, reject) => {
-    if (!url) {
+// Download image from URL, resize to avatar dimensions, and save as WebP
+function downloadAndProcessImage(url, userId) {
+  return new Promise((resolve) => {
+    if (!url || !userId) {
       resolve(false);
       return;
     }
 
-    // Ensure directory exists
-    const dir = path.dirname(filepath);
+    const dir = CONFIG.imagesDir;
     fs.mkdirSync(dir, { recursive: true });
 
-    // Skip if file already exists
-    if (fs.existsSync(filepath)) {
+    const filepath1x = path.join(dir, `${userId}.webp`);
+    const filepath2x = path.join(dir, `${userId}@2x.webp`);
+
+    // Skip if both files already exist
+    if (fs.existsSync(filepath1x) && fs.existsSync(filepath2x)) {
       resolve(true);
       return;
     }
@@ -57,7 +60,7 @@ function downloadImage(url, filepath) {
     const request = protocol.get(url, (response) => {
       // Handle redirects
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        downloadImage(response.headers.location, filepath).then(resolve).catch(reject);
+        downloadAndProcessImage(response.headers.location, userId).then(resolve);
         return;
       }
 
@@ -66,17 +69,29 @@ function downloadImage(url, filepath) {
         return;
       }
 
-      const fileStream = fs.createWriteStream(filepath);
-      response.pipe(fileStream);
+      const chunks = [];
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
 
-      fileStream.on('finish', () => {
-        fileStream.close();
-        resolve(true);
-      });
+          // Create 1x version (48x48)
+          await sharp(buffer)
+            .resize(48, 48, { fit: 'cover' })
+            .webp({ quality: 80 })
+            .toFile(filepath1x);
 
-      fileStream.on('error', (err) => {
-        fs.unlink(filepath, () => {}); // Delete partial file
-        resolve(false);
+          // Create 2x version (96x96) for retina
+          await sharp(buffer)
+            .resize(96, 96, { fit: 'cover' })
+            .webp({ quality: 80 })
+            .toFile(filepath2x);
+
+          resolve(true);
+        } catch (err) {
+          console.warn(`Failed to process image for ${userId}: ${err.message}`);
+          resolve(false);
+        }
       });
     });
 
@@ -218,14 +233,12 @@ async function saveReview(review, outputDir) {
     return false; // Skip existing
   }
 
-  // Download thumbnail if available
+  // Download and process thumbnail if available
   let thumbnailPath = null;
   if (review.userId && review.photoUrl) {
-    const imageFilename = `${review.userId}.jpg`;
-    const imagePath = path.join(CONFIG.imagesDir, imageFilename);
-    const downloaded = await downloadImage(review.photoUrl, imagePath);
+    const downloaded = await downloadAndProcessImage(review.photoUrl, review.userId);
     if (downloaded) {
-      thumbnailPath = `/images/reviewers/${imageFilename}`;
+      thumbnailPath = `/images/reviewers/${review.userId}.webp`;
     }
   }
 

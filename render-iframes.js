@@ -79,10 +79,15 @@ function generateReviewsHtml(reviews) {
 				? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
 				: review.author;
 
+			// Use thumbnail image if available, otherwise fall back to initials
+			const avatarContent = review.thumbnail
+				? `<img src="${review.thumbnail}" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`
+				: initials;
+
 			return `
       <div class="review-card">
         <div class="review-header">
-          <div class="review-avatar">${initials}</div>
+          <div class="review-avatar">${avatarContent}</div>
           <div class="review-info">
             <div class="review-author">${authorLink}</div>
             <div class="review-meta">

@@ -64,8 +64,8 @@
         margin-bottom: 20px;
         /* Performance: isolate each card's layout/paint from affecting others */
         contain: layout paint style;
-        /* Skip rendering for off-screen cards - major perf win for large lists */
-        content-visibility: auto;
+        /* Skip rendering for off-screen cards - major perf win for large lists 
+        content-visibility: auto; */
         /* Estimated height hint for off-screen cards (prevents scroll jumpiness) */
         contain-intrinsic-size: auto 250px;
       }

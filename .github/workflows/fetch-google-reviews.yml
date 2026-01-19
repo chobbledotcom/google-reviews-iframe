@@ -12,13 +12,14 @@ on:
         required: false
         type: string
       source:
-        description: 'Source to fetch (google, facebook, or all)'
+        description: 'Source to fetch (google, facebook, trustpilot, or all)'
         required: false
         type: choice
         options:
           - all
           - google
           - facebook
+          - trustpilot
         default: all
 
 jobs:
@@ -46,7 +47,7 @@ jobs:
         run: bun run build
 
       - name: Fetch Google Reviews
-        if: ${{ github.event.inputs.source != 'facebook' }}
+        if: ${{ github.event.inputs.source != 'facebook' && github.event.inputs.source != 'trustpilot' }}
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
@@ -57,7 +58,7 @@ jobs:
           fi
 
       - name: Fetch Facebook Reviews
-        if: ${{ github.event.inputs.source != 'google' }}
+        if: ${{ github.event.inputs.source != 'google' && github.event.inputs.source != 'trustpilot' }}
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
@@ -65,6 +66,17 @@ jobs:
             bun src/fetch-facebook-reviews.js "${{ github.event.inputs.business_slug }}"
           else
             bun src/fetch-facebook-reviews.js
+          fi
+
+      - name: Fetch Trustpilot Reviews
+        if: ${{ github.event.inputs.source != 'google' && github.event.inputs.source != 'facebook' }}
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.business_slug }}" ]; then
+            bun src/fetch-trustpilot-reviews.js "${{ github.event.inputs.business_slug }}"
+          else
+            bun src/fetch-trustpilot-reviews.js
           fi
 
       - name: Render iframes

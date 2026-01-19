@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google Reviews</title>
+    <title>Reviews</title>
     <meta name="robots" content="nofollow, noindex" />
     <style type="text/css">
       * {
@@ -27,15 +27,31 @@
         margin: 0 auto;
       }
 
-      /* CSS Grid masonry layout for desktop */
-      .reviews-container.masonry-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-        gap: 20px;
+      /* Mobile: show single column, hide desktop */
+      .mobile-reviews {
+        display: block;
       }
 
-      .reviews-container.masonry-hidden {
-        opacity: 0;
+      .desktop-reviews {
+        display: none;
+      }
+
+      /* Desktop: hide mobile, show two columns */
+      @media (min-width: 601px) {
+        .mobile-reviews {
+          display: none;
+        }
+
+        .desktop-reviews {
+          display: flex;
+          gap: 20px;
+          align-items: flex-start;
+        }
+
+        .reviews-column {
+          flex: 1;
+          min-width: 0;
+        }
       }
 
       .review-card {
@@ -44,15 +60,7 @@
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
-        width: 450px;
         margin-bottom: 20px;
-      }
-
-      /* Masonry grid card styling */
-      .masonry-grid .review-card {
-        width: auto;
-        margin-bottom: 0;
-        aspect-ratio: var(--width) / var(--height);
       }
 
       @media (max-device-width: 600px) {
@@ -60,18 +68,9 @@
           padding: 0;
         }
 
-        .reviews-container.masonry-grid {
-          display: block;
-        }
-
         .review-card {
           padding: 10px;
-          width: auto;
           box-shadow: none;
-        }
-
-        .masonry-grid .review-card {
-          aspect-ratio: auto;
           margin-bottom: 15px;
         }
       }
@@ -173,18 +172,29 @@
         font-style: italic;
       }
 
+      .recommended-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #1877f2;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .not-recommended-badge {
+        color: #666;
+        font-size: 14px;
+      }
+
       html,
       body {
         overflow-x: hidden;
       }
     </style>
-    <script>
-      function $(k,q,H){if(k.length>0){if(k[0].target===q)return k[0].contentRect.width;if(k.length===2&&k[1].target===q)return k[1].contentRect.width}return H}class j{constructor(k){this.container=k;let q=getComputedStyle(k),H=document.createElement("div");k.append(H);let I=new ResizeObserver((A)=>{let D=$(A,k,this.containerWidth),Q=$(A,H,this.frameWidth),F=this.gap;if((F===-1||Q!==this.frameWidth)&&(F=parseFloat(q.gap),isNaN(F)&&(F=0)),F===this.gap&&D===this.containerWidth&&Q===this.frameWidth)return;this.containerWidth=D,this.frameWidth=Q;let O=Math.round((D+F)/(Q+F));if(this.columnsCount===O&&F===this.gap){K(),this.resizeHeight(),z();return}this.gap=F,this.columnsCount=O,K(),this.reflow(),z()}),J=new MutationObserver(()=>{K(),k.append(H),this.columnsCount>0&&this.reflow(!0),z()}),z=()=>{J.observe(k,{childList:!0,attributeFilter:["style"],subtree:!0})},K=()=>{J.disconnect()};this.marker=H,this.mutationObserver=J,this.resizeObserver=I,I.observe(k),I.observe(H),z()}gap=-1;frameWidth=-1;containerWidth=-1;columnsCount=-1;containerAspectRatio=-1;framesPositionsMap=new WeakMap;resizeObserver;mutationObserver;marker;resizeHeight(){let{container:k,containerAspectRatio:q}=this;q!==-1?k.style.height=`${this.containerWidth*q}px`:k.style.removeProperty("height")}getFrameAspectRatio(k){let q=parseFloat(k.style.getPropertyValue("--width"));return parseFloat(k.style.getPropertyValue("--height"))/q}getFramePosition(k,q,H){let{gap:I,columnsCount:J,frameWidth:z}=this,K=this.getFrameAspectRatio(k),A=K*z,D=H+A+(q>=J?I:0);return{aspectRatio:K,realIndex:q,virtualIndex:q,height:A,realBottom:D,virtualBottom:D,width:z}}getFramePositionAndCache(k,q,H){let I=this.getFramePosition(k,q,H);return this.framesPositionsMap.set(k,I),I}getCachedScaledFramePosition(k,q,H){let{frameWidth:I}=this,J=this.getFrameAspectRatio(k),z=this.framesPositionsMap.get(k);if(!z||z.realIndex!==q||z.virtualIndex>=H||z.aspectRatio!==J)return null;let K=I/z.width;return z.height*=K,z.realBottom*=K,z.virtualBottom*=K,z.width=I,z}destroy(){let{resizeObserver:k,mutationObserver:q,marker:H,container:I,framesPositionsMap:J}=this;k.disconnect(),q.disconnect(),H.remove();let z=I.children;I.style.removeProperty("height");for(let K=0,A,D=z.length;K<D;K++)A=z[K],A.style.removeProperty("transform"),A.style.removeProperty("order"),J.delete(A)}}class _ extends j{bufferA=[];bufferB=[];balanceRow(k,q,H){let{columnsCount:I,bufferA:J,bufferB:z}=this,K=H-q+1;J.length=K,z.length=K;for(let A=0,D=q;D<=H;A++,D++)J[A]=k[D-I],z[A]=k[D];J.sort((A,D)=>D.virtualBottom-A.virtualBottom),z.sort((A,D)=>A.height-D.height);for(let A=0,D=q,Q=0;D<=H;A++,D++)Q=J[A].virtualIndex+I,k[Q]=z[A],z[A].virtualIndex=Q}reflow(k=!1){let{columnsCount:q}=this;if(k&&q===1)return;let{container:H,marker:I}=this,J=H.children,z=J.length-1,K=z-1,A=Array(z),D=-1,Q=k;I.style.order=String(z);for(let F=0,O,T=0,W=0,N;F<z;F++){if(O=J[F],q===1){O.style.removeProperty("transform"),O.style.removeProperty("order");continue}if(F%q===0&&(W=T),Q){let V=this.getCachedScaledFramePosition(O,F,z);if(V)N=V,A[N.virtualIndex]=N;else{Q=!1;let X=F-F%q;for(let S=X,Y;S<F;S++)Y=J[S],N=this.getFramePositionAndCache(Y,S,W),A[S]=N}}if(Q)T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom);else if(N=this.getFramePositionAndCache(O,F,W),A[F]=N,F>=q&&((F+1)%q===0||F===K)){let V=F-F%q,X=F;this.balanceRow(A,V,X);for(let S=V;S<=X;S++){N=A[S],O=J[N.realIndex],O.style.order=String(N.virtualIndex);let Y=A[S-q],Z=W-Y.virtualBottom;if(Z!==0){let w=Z*100/N.height*-1;O.style.transform=`translateY(${w}%)`,N.virtualBottom-=Z}else O.style.removeProperty("transform");T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom)}}else F<q&&(O.style.order=String(F),O.style.removeProperty("transform"),O.style.removeProperty("order"),T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom))}D===-1?(H.style.removeProperty("height"),this.containerAspectRatio=-1):(H.style.height=`${D}px`,this.containerAspectRatio=D/this.containerWidth)}destroy(){super.destroy(),this.bufferA.length=0,this.bufferB.length=0}}window.BalancedMasonryGrid=_;
-
-    </script>
   </head>
   <body>
     <div class="reviews-container">
+    <div class="mobile-reviews">
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar"><img src="/images/reviewers/101776939617740162593.webp" srcset="/images/reviewers/101776939617740162593.webp 1x, /images/reviewers/101776939617740162593@2x.webp 2x" alt="Chaz Saunders" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CS'"></div>
@@ -687,10 +697,515 @@ Matt was round quickly and scoped everything out. Wasn’t a massive quote at al
 Couldn’t be happier.</div>
       </div>
     </div>
+    <div class="desktop-reviews">
+    <div class="reviews-column reviews-column-left">
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101776939617740162593.webp" srcset="/images/reviewers/101776939617740162593.webp 1x, /images/reviewers/101776939617740162593@2x.webp 2x" alt="Chaz Saunders" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101776939617740162593?hl=en" target="_blank" rel="noopener noreferrer">Chaz Saunders</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 weeks ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We found my security via google, and whilst not used before Matt and his team were quick in responding to an urgent call out to solve our old system issue. Excellent courteous service from Matt who not fixed it with his call out time but also helped reset passwords, would highly recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103609500269979782429.webp" srcset="/images/reviewers/103609500269979782429.webp 1x, /images/reviewers/103609500269979782429@2x.webp 2x" alt="Martin Thompson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103609500269979782429?hl=en" target="_blank" rel="noopener noreferrer">Martin Thompson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt was very helpful, arrived on time, respected our home, carried out a quick siren battery replacement and then reset code that I had forgotten! All at a very competitive price. Would highly recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/107919162784493370500.webp" srcset="/images/reviewers/107919162784493370500.webp 1x, /images/reviewers/107919162784493370500@2x.webp 2x" alt="Jennifer Thomas" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/107919162784493370500?hl=en" target="_blank" rel="noopener noreferrer">Jennifer Thomas</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">5 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt and Rachel were great at getting us quotes, providing advice and installing the products quickly and tidily. Highly recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108854721719323683804.webp" srcset="/images/reviewers/108854721719323683804.webp 1x, /images/reviewers/108854721719323683804@2x.webp 2x" alt="Jacek Ruciński" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108854721719323683804?hl=en" target="_blank" rel="noopener noreferrer">Jacek Ruciński</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">10 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Our two years experience with Matt and Rachel of MyAlarm Security is entirely positive. Matt is a highly professional,  experienced and kind man who takes the trouble to explain in detail various aspects of his security system. We are very glad that we have chosen his company to take care of the security of our home. We would recommend Matt and his company to anyone wishing to have a reliable domestic security system. Thank you Matt and Rachel for your hard work!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108771779641709542519.webp" srcset="/images/reviewers/108771779641709542519.webp 1x, /images/reviewers/108771779641709542519@2x.webp 2x" alt="Megan Sharpe" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108771779641709542519?hl=en" target="_blank" rel="noopener noreferrer">Megan Sharpe</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">11 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We recently had an alarm system installed by My Alarm Security, and we couldn’t be happier with the service. Matt and his team were incredibly efficient, professional, and took the time to tailor the installation to our specific needs. The pricing was very competitive, and the whole process was smooth from start to finish. We now feel much more secure in our home, and I wouldn’t hesitate to recommend them to anyone looking for a reliable home security solution. Thanks again!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/102958900070358121078.webp" srcset="/images/reviewers/102958900070358121078.webp 1x, /images/reviewers/102958900070358121078@2x.webp 2x" alt="Dushyant Purohit" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/102958900070358121078?hl=en" target="_blank" rel="noopener noreferrer">Dushyant Purohit</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service and high quality material from myalarm. Matt installed CCTV system to our flat and commercial building. Installation was very precise and accurate. Nice, clean and tidy work. After installation support and help was fantastic. Clear communication from beginning and reasonable price in area. Highly recommended :)</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109836463131185429976.webp" srcset="/images/reviewers/109836463131185429976.webp 1x, /images/reviewers/109836463131185429976@2x.webp 2x" alt="Graham Rogers" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109836463131185429976?hl=en" target="_blank" rel="noopener noreferrer">Graham Rogers</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt attended today to remove my old system and install a new one. He was very efficient, his work was clean and very professional. He fully explained the new system which is easy to operate    I would highly recommend Matt and his company.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/110554499923761277052.webp" srcset="/images/reviewers/110554499923761277052.webp 1x, /images/reviewers/110554499923761277052@2x.webp 2x" alt="Elena Patten" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='EP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/110554499923761277052?hl=en" target="_blank" rel="noopener noreferrer">Elena Patten</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thank you to Matt for your company's great service. We would highly recommend MyAlarm Security. Give them a call!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/104963844915177402068.webp" srcset="/images/reviewers/104963844915177402068.webp 1x, /images/reviewers/104963844915177402068@2x.webp 2x" alt="Alan Hardy" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/104963844915177402068?hl=en" target="_blank" rel="noopener noreferrer">Alan Hardy</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt installed our buglar alarm system today, he did a superb job, nothing was to much trouble, he was professional, explained everything in layman's terms  cleaned up afterwards, I would recommend him highly, if you need an alarm system, this is were you want go</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103940070825213112626.webp" srcset="/images/reviewers/103940070825213112626.webp 1x, /images/reviewers/103940070825213112626@2x.webp 2x" alt="Margaret Rolleston" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103940070825213112626?hl=en" target="_blank" rel="noopener noreferrer">Margaret Rolleston</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Our experience with MyAlarm Security was entirely positive. Matt was able to come round the day after we phoned, explained everything very clearly and even brought a demonstration pack so we could see the equipment. He gave an on the spot quote which was significantly lower than another local company and was able to fit the security system the following week. He was very knowledgeable, professional and friendly, and the fitting process was clean and efficient. We wouldn't hesitate to recommend MyAlarm and are very happy we decided to use their service. Thanks Matt and Rachel.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/102721420072974845259.webp" srcset="/images/reviewers/102721420072974845259.webp 1x, /images/reviewers/102721420072974845259@2x.webp 2x" alt="Peter Fallows" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='PF'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/102721420072974845259?hl=en" target="_blank" rel="noopener noreferrer">Peter Fallows</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent from every point of view -- highly recommended</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101298305094635807153.webp" srcset="/images/reviewers/101298305094635807153.webp 1x, /images/reviewers/101298305094635807153@2x.webp 2x" alt="Mark Kelsey" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MK'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101298305094635807153?hl=en" target="_blank" rel="noopener noreferrer">Mark Kelsey</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service form Matt. Responsed to a call at 3am and arrived within 30 minutes. Highly recommended My Alarm Security.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106455923966271242545.webp" srcset="/images/reviewers/106455923966271242545.webp 1x, /images/reviewers/106455923966271242545@2x.webp 2x" alt="linda patterson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106455923966271242545?hl=en" target="_blank" rel="noopener noreferrer">linda patterson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Hi Matt thank you for your prompt service ,great job, great advice  ,will certainly use you again ,cameras and alarm all working fine
+Colin</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117265098010085769283.webp" srcset="/images/reviewers/117265098010085769283.webp 1x, /images/reviewers/117265098010085769283@2x.webp 2x" alt="James Blandford" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117265098010085769283?hl=en" target="_blank" rel="noopener noreferrer">James Blandford</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Very happy with our new alarm installation today. Matt gave a helpful explanation of the options, installation was very neat and accommodating to our needs. Good system and good value, considering it is a professionally installed alarm rather than a DIY kit and not got silly ongoing monthly costs. Would definitely recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/110556541300939761344.webp" srcset="/images/reviewers/110556541300939761344.webp 1x, /images/reviewers/110556541300939761344@2x.webp 2x" alt="Rita Noble" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RN'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/110556541300939761344?hl=en" target="_blank" rel="noopener noreferrer">Rita Noble</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Choosing the system I needed was straightforward as the website was set out so clearly and concisely, including the cost. As I was self-isolating, the survey was carried out via facetime, which was perfect.
+On the day of fitting, Matt arrived exactly at the time he said he would and was very organised. Once the alarm was fitted, he was so patient too as he helped me set up the app on my phone and made absolutely sure that I was confident in arming/disarming the system. I cannot fault the service I received.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106374328106501891877.webp" srcset="/images/reviewers/106374328106501891877.webp 1x, /images/reviewers/106374328106501891877@2x.webp 2x" alt="Clive Chapman" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106374328106501891877?hl=en" target="_blank" rel="noopener noreferrer">Clive Chapman</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We spent a lot of time researching a new burglar alarm system and are very pleased we chose MyAlarm.     Matt spent a lot of time explaining all options available and we chose the alarm with full HD cctv.    Matt carried out the installation a week later with great respect to our home and fittings.      Work was completed inside of a day, after which Matt cleared up the minimal mess made through drilling etc and although quite late in the afternoon, spent a lot of time fully explaining how to operate the alarm and Cctv.     A first class product and installation by Matt and is highly recommended.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113557999059164834756.webp" srcset="/images/reviewers/113557999059164834756.webp 1x, /images/reviewers/113557999059164834756@2x.webp 2x" alt="Tiny Town Soft Play" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113557999059164834756?hl=en" target="_blank" rel="noopener noreferrer">Tiny Town Soft Play</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Alarm and CCTV system fitted at home and business premises. Very happy with systems and high standards of workmanship. Explained well and engineer very knowledgable. Would highly reccommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111240418985734624048.webp" srcset="/images/reviewers/111240418985734624048.webp 1x, /images/reviewers/111240418985734624048@2x.webp 2x" alt="Spencer Elliott" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111240418985734624048?hl=en" target="_blank" rel="noopener noreferrer">Spencer Elliott</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">True story, the wheel in my van fell off the other day, literally fell off while I was driving...
+I ended up waiting 34 hours to be recovered because I wasn’t covered properly.
+I sorted out break down cover the next day (Little good it did me at the time, though!).
+I decided rather than wait till I was burgled, I’d ask Matt to sort my home security.
+I don’t want to wait till my home is broken in to before I then sort that out, too!
+My wife and children are far more important than my van!
+It’s always after the fact or post issue that I get things sorted, but this is too important.
+Matt was round quickly and scoped everything out. Wasn’t a massive quote at all, was really pleased with it, and all getting done very soon.
+Couldn’t be happier.</div>
+      </div>
+    </div>
+    <div class="reviews-column reviews-column-right">
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/102407987662936953250.webp" srcset="/images/reviewers/102407987662936953250.webp 1x, /images/reviewers/102407987662936953250@2x.webp 2x" alt="Sharon Coelho Fernandes" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/102407987662936953250?hl=en" target="_blank" rel="noopener noreferrer">Sharon Coelho Fernandes</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt assisted with a not urgent but very urgent for sanity request and the benefit of using a local company meant he was on site almost immediately. Highly recommend for their expertise, service and care. Matt decommissioned an existing alarm system that I had not used since moving into the house but decided to beep and then go off in the early hours of morning, scaring my kids especially. Very reasonable charge as well. Thanks Matt and Rachel.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113488207616976078291.webp" srcset="/images/reviewers/113488207616976078291.webp 1x, /images/reviewers/113488207616976078291@2x.webp 2x" alt="Gloria Young" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GY'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113488207616976078291?hl=en" target="_blank" rel="noopener noreferrer">Gloria Young</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt arrived on time and with little prior notice. He was courteous and pleasant and checked and reprogrammed my 25 year old alarm system. It was obvious that he was very familiar with all sorts of Alarm systems. Well recommended.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101278283755577150942.webp" srcset="/images/reviewers/101278283755577150942.webp 1x, /images/reviewers/101278283755577150942@2x.webp 2x" alt="Chris G" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101278283755577150942?hl=en" target="_blank" rel="noopener noreferrer">Chris G</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">6 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Very professional ,quick response time ,very helpful in answering questions i had, it was a pleasure doing business with Matt i would highly recommend him ,Thankyou</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/112374677071198604981.webp" srcset="/images/reviewers/112374677071198604981.webp 1x, /images/reviewers/112374677071198604981@2x.webp 2x" alt="Amy Doughty" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AD'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/112374677071198604981?hl=en" target="_blank" rel="noopener noreferrer">Amy Doughty</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">10 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Matt came to fix a fault with my Mum's house alarm, and I can't recommend this company enough. It would have been easy for a company to come in and try to up-sell my elderly mum a new alarm system or take advantage, but Matt found and fixed the fault quickly, and also gave her some helpful tips on how to use the alarm properly (which we had been doing wrong for the last 18 years!) I was hesitant about getting a company in to look at the alarm, but I needn't have worried - I would 100% recommend this company, especially for those who are elderly or vulnerable. They are a family run business, and are both trustworthy and reliable. Thank you!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108657750932513131943.webp" srcset="/images/reviewers/108657750932513131943.webp 1x, /images/reviewers/108657750932513131943@2x.webp 2x" alt="Gary Tyler" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108657750932513131943?hl=en" target="_blank" rel="noopener noreferrer">Gary Tyler</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We had a old alarm removed and a new wireless alarm installed by Matt and he  explained everything to us and helped us set  it up via the app  so we could view it on our phone ,I can honestly say his service is superb and we would highly recommend Matt's company to anyone, and all at a very reasonable price, thank you we are so pleased with our new alarm .</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/118390327633064582347.webp" srcset="/images/reviewers/118390327633064582347.webp 1x, /images/reviewers/118390327633064582347@2x.webp 2x" alt="Chris Hobbs" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/118390327633064582347?hl=en" target="_blank" rel="noopener noreferrer">Chris Hobbs</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Highly recommend Matt and his team. First class advice and first class install. Could not be happier with the service we received. Thanks again.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109320082994822430031.webp" srcset="/images/reviewers/109320082994822430031.webp 1x, /images/reviewers/109320082994822430031@2x.webp 2x" alt="Borja Cernadas" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='BC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109320082994822430031?hl=en" target="_blank" rel="noopener noreferrer">Borja Cernadas</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">If you are looking for an amazing system and a professional to install it and maintain it, then look no further. MyAlarm is an amazing company and Matt has so much knowledge and experience that you will not be disappointed.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101706198065243528418.webp" srcset="/images/reviewers/101706198065243528418.webp 1x, /images/reviewers/101706198065243528418@2x.webp 2x" alt="Linda Kasparian" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LK'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101706198065243528418?hl=en" target="_blank" rel="noopener noreferrer">Linda Kasparian</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I can highly recommend MyAlarmSecurity.
+I emailed them late at night with an issue I had with my alarm and had a reply early the next morning. A phone call, and Matt was able to come out within a couple of hours. Very friendly, professional service and advice. Thank you Matt and MyAlarm security for your help.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/110802583559721218392.webp" srcset="/images/reviewers/110802583559721218392.webp 1x, /images/reviewers/110802583559721218392@2x.webp 2x" alt="sarah thompson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='ST'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/110802583559721218392?hl=en" target="_blank" rel="noopener noreferrer">sarah thompson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service by Matt. So pleased with new alarm fitted. Arrived on time, excellent throughout and everything explained so well.
+Sarah Barwick</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101142176849400812722.webp" srcset="/images/reviewers/101142176849400812722.webp 1x, /images/reviewers/101142176849400812722@2x.webp 2x" alt="Dorian Craig" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101142176849400812722?hl=en" target="_blank" rel="noopener noreferrer">Dorian Craig</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service by the team. Matt is honest and listens to what you need over trying to sell. He set it all our alarm quickly and  professionally and gave great advice.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113704446638793634089.webp" srcset="/images/reviewers/113704446638793634089.webp 1x, /images/reviewers/113704446638793634089@2x.webp 2x" alt="Rob Eldridge" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113704446638793634089?hl=en" target="_blank" rel="noopener noreferrer">Rob Eldridge</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service from Matt, very professional job. Highly recommend this business.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/114695129341366795097.webp" srcset="/images/reviewers/114695129341366795097.webp 1x, /images/reviewers/114695129341366795097@2x.webp 2x" alt="A Shr" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/114695129341366795097?hl=en" target="_blank" rel="noopener noreferrer">A Shr</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I would highly recommend MyAlarm Security services. I needed to get my alarm serviced. I found MyAlarm Security’s details on the website as one of the local company around Bexley. I had also come across a recommendation on Nextdoor app for the same company. Therefore, I gave Matt a call and explained the service that I needed. He understood my requirements and provided clear communication. We agreed on the price for servicing my house alarm which was reasonable and competitive amongst the other providers. Matt came around the same day and did the job to my satisfaction. He is knowledgeable in his area of expertise and knows what he is doing. He did a walk through of the alarm system which was helpful. Overall, Matt is professional, friendly and does a good quality job. Hence, I am happy to recommend his services based on my experience.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103969652734006035755.webp" srcset="/images/reviewers/103969652734006035755.webp 1x, /images/reviewers/103969652734006035755@2x.webp 2x" alt="Maxine Crouchman" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103969652734006035755?hl=en" target="_blank" rel="noopener noreferrer">Maxine Crouchman</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We have no issues with giving a reference to Matt at My Alarm. Matt was very professional, he listened to what we wanted from our CCTV and Alarm installation and was very helpful with his recommendations. The work was carried out without any hassle and we are very pleased with the product. This is a family run business, so no middle man or franchise, but the level of care and professionalism was second to none. The after sales service is superb, and we would highly recommend Matt and MyAlarm. You will not be disappointed.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100624702131159046884.webp" srcset="/images/reviewers/100624702131159046884.webp 1x, /images/reviewers/100624702131159046884@2x.webp 2x" alt="Kristina Green" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100624702131159046884?hl=en" target="_blank" rel="noopener noreferrer">Kristina Green</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">The engineer was very efficient and our community centre members were very pleased to get the problem with the security door-entry fault sorted.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113555330670513981484.webp" srcset="/images/reviewers/113555330670513981484.webp 1x, /images/reviewers/113555330670513981484@2x.webp 2x" alt="Deano corney" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113555330670513981484?hl=en" target="_blank" rel="noopener noreferrer">Deano corney</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Highly recommend MyAlarm security, right from the start Matt was extremely helpful, booked a date and turned up on time, very professional, friendly, fitted everything and took the  time to explain how it all worked, even repaired a loose phone wire whilst up the ladder saving me the hassle , great job</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/102095898411664090711.webp" srcset="/images/reviewers/102095898411664090711.webp 1x, /images/reviewers/102095898411664090711@2x.webp 2x" alt="Playdays Parties" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='PP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/102095898411664090711?hl=en" target="_blank" rel="noopener noreferrer">Playdays Parties</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">6 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Called on Matt last minute to come and sort my shops alarm out and what a fab job he done very professional and reliable</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111629481799555119459.webp" srcset="/images/reviewers/111629481799555119459.webp 1x, /images/reviewers/111629481799555119459@2x.webp 2x" alt="Sarah Elliott" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111629481799555119459?hl=en" target="_blank" rel="noopener noreferrer">Sarah Elliott</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Fantastic company.  Would definitely recommend to others needing security systems installed.</div>
+      </div>
+    </div>
+  </div>
+  </div>
     <script>
-      // Store iframe-resizer script to execute after masonry
-      window.__iframeResizerInit = function() {
-        /*!
+      /*!
  *  @preserve
  *  
  *  @module      iframe-resizer/child 5.5.7 (umd) - 2025-09-23
@@ -754,87 +1269,6 @@ window.iframeResizer = {
 `,a),ne()}),r}(e),K=X.size>0,typeof Set.prototype.symmetricDifference==="function"&&(Wt=X.symmetricDifference(nn).size>0),nn=X}function ko(){switch(on(),!0){case!Wt:return;case X.size>1:f("Overflowed Elements:",X);break;case K:break;default:f("No overflow detected")}L("overflowObserver","Overflow updated")}function jo(e){let n={root:document.documentElement,side:D?"bottom":"right"};return T=eo(ko,n),T.attachObservers(e),T}function To(e){if(!Array.isArray(e)||e.length===0)return;let n=e[0].target;L("resizeObserver",`Element resized <${function(r){switch(!0){case!te(r):return"";case te(r.id):return`${r.nodeName}#${r.id}`;case te(r.name):return`${r.nodeName} (${r.name}`;case te(r.className):return`${r.nodeName}.${r.className}`;default:return r.nodeName}}(n)}>`)}function xo(e){return ue=new ResizeObserver(To),ue.observe(document.body),Me.add(document.body),f("Attached ResizeObserver to body"),v={attachObserverToNonStaticElements:so,detachObservers:Lt(de,ue,Me,ro),disconnect:()=>{ue.disconnect(),f("Detached ResizeObserver")}},v.attachObserverToNonStaticElements(e),v}function Ao(e){Vt=!e,L("visibilityObserver","Visibility changed")}let rn=(e)=>{let n=new Set;for(let r of e){n.add(r);for(let a of bt(r))n.add(a)}return f(`Inspecting:
 `,n),n},No=(e)=>{if(e.size===0)return;S("addObservers");let n=rn(e);T.attachObservers(n),v.attachObserverToNonStaticElements(n),ne()},Ro=(e)=>{if(e.size===0)return;S("removeObservers");let n=rn(e);T.detachObservers(n),v.detachObservers(n),ne()};function Co(e){(function({addedNodes:n,removedNodes:r}){S("contentMutated"),Yt(),Jt(),on(),ne(),Ro(r),No(n)})(e),L("mutationObserver","Mutation Observed")}function Io(){let e=bt(document.documentElement);var n;n=[Jn(Co),jo(e),no(),xo(e),co(Ao)],u.push(...n.map((r)=>r.disconnect))}function Ce(e){performance.mark(Ke);let n=Tt(e),r=1,a=document.documentElement,c=fe?0:document.documentElement.getBoundingClientRect().bottom,l=fe?ft:K?Array.from(X):bt(document.documentElement);for(let g of l)r=g.getBoundingClientRect()[e]+parseFloat(getComputedStyle(g).getPropertyValue(`margin-${e}`)),r>c&&(c=r,a=g);return f(`${n} position calculated from:`,a),f(`Checked %c${l.length}%c elements`,N,De),performance.mark(Oe,{detail:{hasTags:fe,len:l.length,logging:xe,Side:n}}),c}let Ie=(e)=>[e.bodyOffset(),e.bodyScroll(),e.documentElementOffset(),e.documentElementScroll(),e.boundingClientRect()],Po=`* ${Array.from(Ot).map((e)=>`:not(${e})`).join("")}`,bt=(e)=>e.querySelectorAll(Po),Pe={height:0,width:0},ie={height:0,width:0},J=[N,De,N];function an(e){function n(){return ie[a]=c,Pe[a]=w,Math.max(c,1)}let r=e===P,a=e.label,c=e.boundingClientRect(),l=Math.ceil(c),g=Math.floor(c),w=((q)=>q.documentElementScroll()+Math.max(0,q.getOffset()))(e),j=`HTML: %c${c}px %cPage: %c${w}px`,p=1;switch(!0){case!e.enabled():return Math.max(w,1);case fe:f("Found element with data-iframe-size attribute"),p=e.taggedElement();break;case(!K&&Te&&ie[a]===0&&Pe[a]===0):f(`Initial page size values: ${j}`,...J),p=n();break;case(Ae&&c===ie[a]&&w===Pe[a]):f(`Size unchanged: ${j}`,...J),p=Math.max(c,w);break;case(c===0&&w!==0):f(`Page is hidden: ${j}`,...J),p=w;break;case(!K&&c!==ie[a]&&w<=Pe[a]):f(`New <html> size: ${j} `,...J),f(`Previous <html> size: %c${ie[a]}px`,N),p=n();break;case!r:p=e.taggedElement();break;case(!K&&c<ie[a]):f(`<html> size decreased: ${j}`,...J),p=n();break;case(w===g||w===l):f(`<html> size equals page size: ${j}`,...J),p=n();break;case c>w:f(`Page size < <html> size: ${j}`,...J),p=n();break;case K:f("Found elements possibly overflowing <html> "),p=e.taggedElement();break;default:f(`Using <html> size: ${j}`,...J),p=n()}return f(`Content ${a}: %c${p}px`,N),p+=function(q){let ae=q.getOffset();return ae!==0&&f(`Page offsetSize: %c${ae}px`,N),ae}(e),Math.max(p,1)}let P={label:"height",enabled:()=>D,getOffset:()=>Z,auto:()=>an(P),bodyOffset:()=>{let{body:e}=document,n=getComputedStyle(e);return e.offsetHeight+parseInt(n.marginTop,10)+parseInt(n.marginBottom,10)},bodyScroll:()=>document.body.scrollHeight,offset:()=>P.bodyOffset(),custom:()=>t.height(),documentElementOffset:()=>document.documentElement.offsetHeight,documentElementScroll:()=>document.documentElement.scrollHeight,boundingClientRect:()=>Math.max(document.documentElement.getBoundingClientRect().bottom,document.body.getBoundingClientRect().bottom),max:()=>Math.max(...Ie(P)),min:()=>Math.min(...Ie(P)),grow:()=>P.max(),lowestElement:()=>Ce("bottom"),taggedElement:()=>Ce("bottom")},F={label:"width",enabled:()=>U,getOffset:()=>G,auto:()=>an(F),bodyScroll:()=>document.body.scrollWidth,bodyOffset:()=>document.body.offsetWidth,custom:()=>t.width(),documentElementScroll:()=>document.documentElement.scrollWidth,documentElementOffset:()=>document.documentElement.offsetWidth,boundingClientRect:()=>Math.max(document.documentElement.getBoundingClientRect().right,document.body.getBoundingClientRect().right),max:()=>Math.max(...Ie(F)),min:()=>Math.min(...Ie(F)),rightMostElement:()=>Ce("right"),scroll:()=>Math.max(F.bodyScroll(),F.documentElementScroll()),taggedElement:()=>Ce("right")},sn=(e,n)=>!(Math.abs(e-n)<=mt);function cn(e,n){let r=e[n](),a=e.enabled()&&x!==void 0?function(c){let l=x(c);if(l===void 0)throw TypeError("No value returned from onBeforeResize(), expected a numeric value");if(Number.isNaN(l))throw TypeError(`Invalid value returned from onBeforeResize(): ${l}, expected Number`);if(l<1)throw RangeError(`Out of range value returned from onBeforeResize(): ${l}, must be at least 1`);return l}(r):r;return jn(a>=1,`New iframe ${e.label} is too small: ${a}, must be at least 1`),a}let Le=!1,Lo=jt(()=>O(ee(4))),ln,zt=!1,L=Ve((e,n,r,a,c)=>{switch(S(e),!0){case Vt===!0:if(zt===!0)break;zt=!0,Le=!1,cancelAnimationFrame(ln);break;case(Le===!0&&e!=="overflowObserver"):we();break;case(!s&&!(e in Sn)):f("Resizing disabled");break;default:zt=!1,Le=!0,performance.now(),ln=requestAnimationFrame(()=>{Le=!1,S("requestAnimationFrame")}),function(l,g,w,j,p){let q=w??cn(P,k),ae=j??cn(F,C);switch(D&&sn(me,q)||U&&sn(ge,ae)?St:l){case"init":case"autoResizeEnabled":case St:me=q,ge=ae;case"setOffsetSize":un(me,ge,l,p);break;case"overflowObserver":case"mutationObserver":case"resizeObserver":case"visibilityObserver":we();break;default:we(),f("No change in content size detected")}}(e,0,r,a,c)}ne()});function dn(e){me=P[k](),ge=F[C](),$(me,ge,e)}function un(e,n,r,a,c){z<-1||(c!==void 0||(c=he),function(){let l=`${pe}:${e}:${n}:${r}${a===void 0?"":`:${a}`}`;if(dt)try{window.parent.iframeParentListener("[iFrameSizer]"+l)}catch(g){if(z!==1)throw g;return void Lo()}else Zt.postMessage("[iFrameSizer]"+l,c);f(`Sending message to parent page via ${dt?"sameOrigin":"postMessage"}: %c%c${l}`,"font-style: italic;",N)}())}let $=Ve((e,n,r,a,c)=>{S(r),un(e,n,r,a,c),ne()}),fn=Ve(function(e){S("onMessage");let{freeze:n}=Object,{parse:r}=JSON,a=(p)=>$(0,0,`${p}Stop`),c={init:function(){if(document.readyState==="loading")return;let p=e.data.slice(13).split(":");Zt=e.source,M=e.origin,lo(p),Te=!1,setTimeout(()=>{Ht=!1},128)},reset(){Ht||dn("resetPage")},resize(){L("parentResize","Parent window requested size check")},moveToAnchor(){re.findTarget(g())},inPageLink(){this.moveToAnchor()},pageInfo(){let p=g();Ne?ve(Ne,r(p)):a("pageInfo")},parentInfo(){let p=(q=g(),n(r(q)));var q;Re?ve(Re,p):a("parentInfo")},message(){let p=g();ve(ht,r(p))}},l=()=>e.data.split("]")[1].split(":")[0],g=()=>e.data.slice(e.data.indexOf(":")+1),w=()=>(e.data.split(":")[2]in{true:1,false:1});function j(){let p=l();S(p),p in c?c[p]():("iframeResize"in window)||window.jQuery!==void 0&&(""in window.jQuery.prototype)||w()||H(`Unexpected message (${e.data})`)}`${e.data}`.slice(0,13)==="[iFrameSizer]"&&function(){if(Te!==!1)return w()?(Tn(l()),S("init"),void c.init()):void 0;j()}()}),mn=!1,pn=(e)=>e.postMessage("[iFrameResizerChild]Ready",window?.iframeResizer?.targetOrigin||"*");function hn(){if(document.readyState==="loading"||!Te||mn)return;let{parent:e,top:n}=window;S("ready"),pn(e),e!==n&&pn(n),mn=!0}"iframeChildListener"in window?H("Already setup"):(window.iframeChildListener=(e)=>setTimeout(()=>fn({data:e,sameOrigin:!0})),W(window,"message",fn),W(document,"readystatechange",hn),hn())}()});
 
-      };
-    </script>
-    <script>
-      // Initialize BalancedMasonryGrid only if viewport width > 600px
-      // Then initialize iframe-resizer AFTER masonry completes
-      (function () {
-        var grid = null;
-        var container = null;
-        var iframeResizerInitialized = false;
-
-        function initIframeResizer() {
-          if (!iframeResizerInitialized && window.__iframeResizerInit) {
-            iframeResizerInitialized = true;
-            window.__iframeResizerInit();
-          }
-        }
-
-        function measureAndSetAspectRatios() {
-          var cards = document.querySelectorAll(".review-card");
-          cards.forEach(function (card) {
-            var width = card.offsetWidth || 450;
-            var height = card.scrollHeight || card.offsetHeight;
-            card.style.setProperty("--width", width);
-            card.style.setProperty("--height", height);
-          });
-        }
-
-        function initMasonry() {
-          container = document.querySelector(".reviews-container");
-          if (!container) {
-            // No container, just init iframe-resizer
-            initIframeResizer();
-            return;
-          }
-
-          if (window.innerWidth > 600) {
-            if (!grid) {
-              // Add masonry classes
-              container.classList.add("masonry-grid", "masonry-hidden");
-
-              // Measure cards and set aspect ratios
-              measureAndSetAspectRatios();
-
-              // Initialize BalancedMasonryGrid
-              grid = new BalancedMasonryGrid(container);
-
-              // Show the grid after initialization
-              container.classList.remove("masonry-hidden");
-            }
-          } else {
-            if (grid) {
-              grid.destroy();
-              grid = null;
-              container.classList.remove("masonry-grid", "masonry-hidden");
-              // Reset aspect-ratio on mobile
-              var cards = document.querySelectorAll(".review-card");
-              cards.forEach(function (card) {
-                card.style.removeProperty("--width");
-                card.style.removeProperty("--height");
-              });
-            }
-          }
-
-          // Initialize iframe-resizer AFTER masonry is done
-          initIframeResizer();
-        }
-
-        // Initialize on load
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", initMasonry);
-        } else {
-          initMasonry();
-        }
-
-        // Re-initialize on resize (debounced)
-        var resizeTimeout;
-        window.addEventListener("resize", function () {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(initMasonry, 150);
-        });
-      })();
     </script>
   </body>
 </html>

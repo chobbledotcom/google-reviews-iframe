@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google Reviews</title>
+    <title>Reviews</title>
     <meta name="robots" content="nofollow, noindex" />
     <style type="text/css">
       * {
@@ -27,15 +27,31 @@
         margin: 0 auto;
       }
 
-      /* CSS Grid masonry layout for desktop */
-      .reviews-container.masonry-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-        gap: 20px;
+      /* Mobile: show single column, hide desktop */
+      .mobile-reviews {
+        display: block;
       }
 
-      .reviews-container.masonry-hidden {
-        opacity: 0;
+      .desktop-reviews {
+        display: none;
+      }
+
+      /* Desktop: hide mobile, show two columns */
+      @media (min-width: 601px) {
+        .mobile-reviews {
+          display: none;
+        }
+
+        .desktop-reviews {
+          display: flex;
+          gap: 20px;
+          align-items: flex-start;
+        }
+
+        .reviews-column {
+          flex: 1;
+          min-width: 0;
+        }
       }
 
       .review-card {
@@ -44,15 +60,7 @@
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
-        width: 450px;
         margin-bottom: 20px;
-      }
-
-      /* Masonry grid card styling */
-      .masonry-grid .review-card {
-        width: auto;
-        margin-bottom: 0;
-        aspect-ratio: var(--width) / var(--height);
       }
 
       @media (max-device-width: 600px) {
@@ -60,18 +68,9 @@
           padding: 0;
         }
 
-        .reviews-container.masonry-grid {
-          display: block;
-        }
-
         .review-card {
           padding: 10px;
-          width: auto;
           box-shadow: none;
-        }
-
-        .masonry-grid .review-card {
-          aspect-ratio: auto;
           margin-bottom: 15px;
         }
       }
@@ -173,102 +172,30 @@
         font-style: italic;
       }
 
+      .recommended-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #1877f2;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .not-recommended-badge {
+        color: #666;
+        font-size: 14px;
+      }
+
       html,
       body {
         overflow-x: hidden;
       }
     </style>
-    <script>
-      {{MASONRY_SCRIPT}}
-    </script>
   </head>
   <body>
     <div class="reviews-container">{{REVIEWS_HTML}}</div>
     <script>
-      // Store iframe-resizer script to execute after masonry
-      window.__iframeResizerInit = function() {
-        {{IFRAME_RESIZER_SCRIPT}}
-      };
-    </script>
-    <script>
-      // Initialize BalancedMasonryGrid only if viewport width > 600px
-      // Then initialize iframe-resizer AFTER masonry completes
-      (function () {
-        var grid = null;
-        var container = null;
-        var iframeResizerInitialized = false;
-
-        function initIframeResizer() {
-          if (!iframeResizerInitialized && window.__iframeResizerInit) {
-            iframeResizerInitialized = true;
-            window.__iframeResizerInit();
-          }
-        }
-
-        function measureAndSetAspectRatios() {
-          var cards = document.querySelectorAll(".review-card");
-          cards.forEach(function (card) {
-            var width = card.offsetWidth || 450;
-            var height = card.scrollHeight || card.offsetHeight;
-            card.style.setProperty("--width", width);
-            card.style.setProperty("--height", height);
-          });
-        }
-
-        function initMasonry() {
-          container = document.querySelector(".reviews-container");
-          if (!container) {
-            // No container, just init iframe-resizer
-            initIframeResizer();
-            return;
-          }
-
-          if (window.innerWidth > 600) {
-            if (!grid) {
-              // Add masonry classes
-              container.classList.add("masonry-grid", "masonry-hidden");
-
-              // Measure cards and set aspect ratios
-              measureAndSetAspectRatios();
-
-              // Initialize BalancedMasonryGrid
-              grid = new BalancedMasonryGrid(container);
-
-              // Show the grid after initialization
-              container.classList.remove("masonry-hidden");
-            }
-          } else {
-            if (grid) {
-              grid.destroy();
-              grid = null;
-              container.classList.remove("masonry-grid", "masonry-hidden");
-              // Reset aspect-ratio on mobile
-              var cards = document.querySelectorAll(".review-card");
-              cards.forEach(function (card) {
-                card.style.removeProperty("--width");
-                card.style.removeProperty("--height");
-              });
-            }
-          }
-
-          // Initialize iframe-resizer AFTER masonry is done
-          initIframeResizer();
-        }
-
-        // Initialize on load
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", initMasonry);
-        } else {
-          initMasonry();
-        }
-
-        // Re-initialize on resize (debounced)
-        var resizeTimeout;
-        window.addEventListener("resize", function () {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(initMasonry, 150);
-        });
-      })();
+      {{IFRAME_RESIZER_SCRIPT}}
     </script>
   </body>
 </html>

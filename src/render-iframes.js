@@ -85,46 +85,43 @@ function renderStars(rating) {
   return `<div class="star-rating">${stars}</div>`;
 }
 
-function renderRating(review, source) {
-  // For Facebook, show "Recommends" badge if rating is 5
-  if (source === "facebook") {
+function renderRating(review) {
+  // For Facebook, show "Recommends" badge
+  if (review.source === "facebook") {
     return review.rating === 5
       ? '<span class="recommended-badge">👍 Recommends</span>'
       : '<span class="not-recommended-badge">Does not recommend</span>';
   }
-  // For Google, show star rating
+  // For Google/Trustpilot, show star rating
   return renderStars(review.rating);
 }
 
-function generateReviewsHtml(reviews, source = "google") {
-  if (!reviews || reviews.length === 0) {
-    return '<div class="no-reviews">No reviews available.</div>';
+function countWords(text) {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function renderReviewCard(review) {
+  const initials = getInitials(review.author);
+  const authorLink = review.authorUrl
+    ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
+    : review.author;
+
+  // Use thumbnail image if available, otherwise fall back to initials
+  let avatarContent = initials;
+  if (review.thumbnail) {
+    const thumb2x = review.thumbnail.replace(".webp", "@2x.webp");
+    avatarContent = `<img src="${review.thumbnail}" srcset="${review.thumbnail} 1x, ${thumb2x} 2x" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`;
   }
 
-  const renderReview = (review) => {
-    const initials = getInitials(review.author);
-    const authorLink = review.authorUrl
-      ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
-      : review.author;
-
-    // Use thumbnail image if available, otherwise fall back to initials
-    let avatarContent = initials;
-    if (review.thumbnail) {
-      const thumb2x = review.thumbnail.replace(".webp", "@2x.webp");
-      avatarContent = `<img src="${review.thumbnail}" srcset="${review.thumbnail} 1x, ${thumb2x} 2x" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`;
-    }
-
-    // Determine source from review data or passed parameter
-    const reviewSource = review.source || source;
-
-    return `
+  return `
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar">${avatarContent}</div>
           <div class="review-info">
             <div class="review-author">${authorLink}</div>
             <div class="review-meta">
-              ${renderRating(review, reviewSource)}
+              ${renderRating(review)}
               <span class="review-date">${formatDate(review.date)}</span>
             </div>
           </div>
@@ -132,72 +129,86 @@ function generateReviewsHtml(reviews, source = "google") {
         <div class="review-content">${review.content || ""}</div>
       </div>
     `;
-  };
-
-  return map(renderReview)(reviews).join("");
 }
 
-function generateHtml(reviews, _businessSlug, source = "google") {
+// Determine which column to add a review to based on word count balance
+function shouldAddToLeft(leftWordCount, rightWordCount, index) {
+  // If right column is 20+ words longer, add to left
+  if (rightWordCount - leftWordCount >= 20) return true;
+  // If left column is 20+ words longer, add to right
+  if (leftWordCount - rightWordCount >= 20) return false;
+  // Otherwise alternate starting with left
+  return index % 2 === 0;
+}
+
+function generateReviewsHtml(reviews) {
+  if (!reviews || reviews.length === 0) {
+    return '<div class="no-reviews">No reviews available.</div>';
+  }
+
+  // Generate mobile layout (single column, all reviews in order)
+  const mobileHtml = reviews.map(renderReviewCard).join("");
+
+  // Generate desktop layout (two columns, balanced by word count)
+  const leftColumn = [];
+  const rightColumn = [];
+  let leftWordCount = 0;
+  let rightWordCount = 0;
+
+  for (let i = 0; i < reviews.length; i++) {
+    const review = reviews[i];
+    const reviewWords = countWords(review.content);
+    const reviewHtml = renderReviewCard(review);
+
+    if (shouldAddToLeft(leftWordCount, rightWordCount, i)) {
+      leftColumn.push(reviewHtml);
+      leftWordCount += reviewWords;
+    } else {
+      rightColumn.push(reviewHtml);
+      rightWordCount += reviewWords;
+    }
+  }
+
+  const desktopHtml = `
+    <div class="reviews-column reviews-column-left">${leftColumn.join("")}</div>
+    <div class="reviews-column reviews-column-right">${rightColumn.join("")}</div>
+  `;
+
+  return `
+    <div class="mobile-reviews">${mobileHtml}</div>
+    <div class="desktop-reviews">${desktopHtml}</div>
+  `;
+}
+
+function generateHtml(reviews) {
   if (!fs.existsSync(TEMPLATE_PATH)) {
     throw new Error(`Template file not found: ${TEMPLATE_PATH}`);
   }
 
   // Read HTML template
-  let template = fs.readFileSync(TEMPLATE_PATH, "utf8");
-
-  // Read bundled masonry script from dist/
-  const masonryScriptPath = path.join(rootDir, "dist", "masonry.js");
-  const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
+  const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
   // Read bundled iframe resizer child script from dist/
   const childScriptPath = path.join(rootDir, "dist", "iframe-resizer-child.js");
   const childScript = fs.readFileSync(childScriptPath, "utf8");
 
   // Generate reviews HTML
-  const reviewsHtml = generateReviewsHtml(reviews, source);
-
-  // Update title based on source
-  const title = source === "facebook" ? "Facebook Reviews" : "Google Reviews";
-  template = template.replace(
-    "<title>Google Reviews</title>",
-    `<title>${title}</title>`,
-  );
-
-  // Add Facebook-specific styles if needed
-  if (source === "facebook") {
-    const fbStyles = `
-      .recommended-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        color: #1877f2;
-        font-weight: 500;
-        font-size: 14px;
-      }
-      .not-recommended-badge {
-        color: #666;
-        font-size: 14px;
-      }
-    `;
-    template = template.replace("</style>", `${fbStyles}</style>`);
-  }
+  const reviewsHtml = generateReviewsHtml(reviews);
 
   // Replace placeholders
   let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
-  html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
   html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
   return html;
 }
 
-function generateEmbedCode(businessSlug, source = "google") {
+function generateEmbedCode(businessSlug) {
   const iframeUrl = `https://reviews-embeds.chobble.com/${businessSlug}/`;
-  const sourceLabel = source === "facebook" ? "Facebook" : "Google";
 
-  return `<!-- ${sourceLabel} Reviews Embed Code for ${businessSlug} -->
+  return `<!-- Reviews Embed Code for ${businessSlug} -->
 <script async defer src="https://reviews-embeds.chobble.com/js"></script>
 <iframe
-  class="${source}-reviews-iframe"
+  class="reviews-iframe"
   src="${iframeUrl}"
   style="width: 100%; height: 1500px; margin: 2rem 0; padding:0; border: none; overflow: scroll; background: transparent;"
   scrolling="yes"
@@ -211,8 +222,6 @@ function generateEmbedCode(businessSlug, source = "google") {
 
 function renderBusiness(business) {
   const businessSlug = business.slug;
-  const source = business.source || "google";
-
   const reviews = loadReviews(businessSlug);
 
   if (reviews.length === 0) {
@@ -220,7 +229,7 @@ function renderBusiness(business) {
   }
 
   try {
-    const html = generateHtml(reviews, businessSlug, source);
+    const html = generateHtml(reviews);
 
     const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
     fs.mkdirSync(businessDir, { recursive: true });
@@ -228,7 +237,7 @@ function renderBusiness(business) {
     const htmlPath = path.join(businessDir, "index.html");
     fs.writeFileSync(htmlPath, html);
 
-    const embedCode = generateEmbedCode(businessSlug, source);
+    const embedCode = generateEmbedCode(businessSlug);
     const codePath = path.join(businessDir, "code.txt");
     fs.writeFileSync(codePath, embedCode);
   } catch (_error) {

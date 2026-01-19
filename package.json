@@ -15,7 +15,10 @@
     "lint": "bunx @biomejs/biome check --error-on-warnings .",
     "lint:fix": "bunx @biomejs/biome check --write .",
     "cpd": "jscpd",
-    "precommit": "bun src/scripts/precommit.js"
+    "precommit": "bun src/scripts/precommit.js",
+    "test:e2e": "bunx playwright test",
+    "test:e2e:ui": "bunx playwright test --ui",
+    "test:e2e:debug": "bunx playwright test --debug"
   },
   "dependencies": {
     "@iframe-resizer/child": "^5.5.7",
@@ -23,6 +26,7 @@
     "sharp": "^0.33.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "jscpd": "^4.0.5"
   },
   "engines": {

@@ -27,15 +27,31 @@
         margin: 0 auto;
       }
 
-      /* CSS Grid masonry layout for desktop */
-      .reviews-container.masonry-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-        gap: 20px;
+      /* Mobile: show single column, hide desktop */
+      .mobile-reviews {
+        display: block;
       }
 
-      .reviews-container.masonry-hidden {
-        opacity: 0;
+      .desktop-reviews {
+        display: none;
+      }
+
+      /* Desktop: hide mobile, show two columns */
+      @media (min-width: 601px) {
+        .mobile-reviews {
+          display: none;
+        }
+
+        .desktop-reviews {
+          display: flex;
+          gap: 20px;
+          align-items: flex-start;
+        }
+
+        .reviews-column {
+          flex: 1;
+          min-width: 0;
+        }
       }
 
       .review-card {
@@ -44,15 +60,7 @@
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
-        width: 450px;
         margin-bottom: 20px;
-      }
-
-      /* Masonry grid card styling */
-      .masonry-grid .review-card {
-        width: auto;
-        margin-bottom: 0;
-        aspect-ratio: var(--width) / var(--height);
       }
 
       @media (max-device-width: 600px) {
@@ -60,18 +68,9 @@
           padding: 0;
         }
 
-        .reviews-container.masonry-grid {
-          display: block;
-        }
-
         .review-card {
           padding: 10px;
-          width: auto;
           box-shadow: none;
-        }
-
-        .masonry-grid .review-card {
-          aspect-ratio: auto;
           margin-bottom: 15px;
         }
       }
@@ -178,13 +177,10 @@
         overflow-x: hidden;
       }
     </style>
-    <script>
-      function $(k,q,H){if(k.length>0){if(k[0].target===q)return k[0].contentRect.width;if(k.length===2&&k[1].target===q)return k[1].contentRect.width}return H}class j{constructor(k){this.container=k;let q=getComputedStyle(k),H=document.createElement("div");k.append(H);let I=new ResizeObserver((A)=>{let D=$(A,k,this.containerWidth),Q=$(A,H,this.frameWidth),F=this.gap;if((F===-1||Q!==this.frameWidth)&&(F=parseFloat(q.gap),isNaN(F)&&(F=0)),F===this.gap&&D===this.containerWidth&&Q===this.frameWidth)return;this.containerWidth=D,this.frameWidth=Q;let O=Math.round((D+F)/(Q+F));if(this.columnsCount===O&&F===this.gap){K(),this.resizeHeight(),z();return}this.gap=F,this.columnsCount=O,K(),this.reflow(),z()}),J=new MutationObserver(()=>{K(),k.append(H),this.columnsCount>0&&this.reflow(!0),z()}),z=()=>{J.observe(k,{childList:!0,attributeFilter:["style"],subtree:!0})},K=()=>{J.disconnect()};this.marker=H,this.mutationObserver=J,this.resizeObserver=I,I.observe(k),I.observe(H),z()}gap=-1;frameWidth=-1;containerWidth=-1;columnsCount=-1;containerAspectRatio=-1;framesPositionsMap=new WeakMap;resizeObserver;mutationObserver;marker;resizeHeight(){let{container:k,containerAspectRatio:q}=this;q!==-1?k.style.height=`${this.containerWidth*q}px`:k.style.removeProperty("height")}getFrameAspectRatio(k){let q=parseFloat(k.style.getPropertyValue("--width"));return parseFloat(k.style.getPropertyValue("--height"))/q}getFramePosition(k,q,H){let{gap:I,columnsCount:J,frameWidth:z}=this,K=this.getFrameAspectRatio(k),A=K*z,D=H+A+(q>=J?I:0);return{aspectRatio:K,realIndex:q,virtualIndex:q,height:A,realBottom:D,virtualBottom:D,width:z}}getFramePositionAndCache(k,q,H){let I=this.getFramePosition(k,q,H);return this.framesPositionsMap.set(k,I),I}getCachedScaledFramePosition(k,q,H){let{frameWidth:I}=this,J=this.getFrameAspectRatio(k),z=this.framesPositionsMap.get(k);if(!z||z.realIndex!==q||z.virtualIndex>=H||z.aspectRatio!==J)return null;let K=I/z.width;return z.height*=K,z.realBottom*=K,z.virtualBottom*=K,z.width=I,z}destroy(){let{resizeObserver:k,mutationObserver:q,marker:H,container:I,framesPositionsMap:J}=this;k.disconnect(),q.disconnect(),H.remove();let z=I.children;I.style.removeProperty("height");for(let K=0,A,D=z.length;K<D;K++)A=z[K],A.style.removeProperty("transform"),A.style.removeProperty("order"),J.delete(A)}}class _ extends j{bufferA=[];bufferB=[];balanceRow(k,q,H){let{columnsCount:I,bufferA:J,bufferB:z}=this,K=H-q+1;J.length=K,z.length=K;for(let A=0,D=q;D<=H;A++,D++)J[A]=k[D-I],z[A]=k[D];J.sort((A,D)=>D.virtualBottom-A.virtualBottom),z.sort((A,D)=>A.height-D.height);for(let A=0,D=q,Q=0;D<=H;A++,D++)Q=J[A].virtualIndex+I,k[Q]=z[A],z[A].virtualIndex=Q}reflow(k=!1){let{columnsCount:q}=this;if(k&&q===1)return;let{container:H,marker:I}=this,J=H.children,z=J.length-1,K=z-1,A=Array(z),D=-1,Q=k;I.style.order=String(z);for(let F=0,O,T=0,W=0,N;F<z;F++){if(O=J[F],q===1){O.style.removeProperty("transform"),O.style.removeProperty("order");continue}if(F%q===0&&(W=T),Q){let V=this.getCachedScaledFramePosition(O,F,z);if(V)N=V,A[N.virtualIndex]=N;else{Q=!1;let X=F-F%q;for(let S=X,Y;S<F;S++)Y=J[S],N=this.getFramePositionAndCache(Y,S,W),A[S]=N}}if(Q)T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom);else if(N=this.getFramePositionAndCache(O,F,W),A[F]=N,F>=q&&((F+1)%q===0||F===K)){let V=F-F%q,X=F;this.balanceRow(A,V,X);for(let S=V;S<=X;S++){N=A[S],O=J[N.realIndex],O.style.order=String(N.virtualIndex);let Y=A[S-q],Z=W-Y.virtualBottom;if(Z!==0){let w=Z*100/N.height*-1;O.style.transform=`translateY(${w}%)`,N.virtualBottom-=Z}else O.style.removeProperty("transform");T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom)}}else F<q&&(O.style.order=String(F),O.style.removeProperty("transform"),O.style.removeProperty("order"),T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom))}D===-1?(H.style.removeProperty("height"),this.containerAspectRatio=-1):(H.style.height=`${D}px`,this.containerAspectRatio=D/this.containerWidth)}destroy(){super.destroy(),this.bufferA.length=0,this.bufferB.length=0}}window.BalancedMasonryGrid=_;
-
-    </script>
   </head>
   <body>
     <div class="reviews-container">
+    <div class="mobile-reviews">
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar"><img src="/images/reviewers/114509346694917927443.webp" srcset="/images/reviewers/114509346694917927443.webp 1x, /images/reviewers/114509346694917927443@2x.webp 2x" alt="Charlotte MILLER" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CM'"></div>
@@ -2040,10 +2036,1868 @@ Polite staff and a nice selection of inflatables
 Highly recommend bouncy castle hire bexley for all your children's parties ��</div>
       </div>
     </div>
+    <div class="desktop-reviews">
+    <div class="reviews-column reviews-column-left">
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/114509346694917927443.webp" srcset="/images/reviewers/114509346694917927443.webp 1x, /images/reviewers/114509346694917927443@2x.webp 2x" alt="Charlotte MILLER" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/114509346694917927443?hl=en" target="_blank" rel="noopener noreferrer">Charlotte MILLER</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I cannot recommend Elliott’s Bouncy Castle hire highly enough. The service, equipment and facilities we had were all outstanding for my sons 5th birthday. The value of this package was brilliant and gave me the flexibility I needed. Sarah and Spencer were so helpful and pleasant and the whole process couldn’t have been easier. The 3D castle was a hit with the kids. Thanks guys!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117065817640848787604.webp" srcset="/images/reviewers/117065817640848787604.webp 1x, /images/reviewers/117065817640848787604@2x.webp 2x" alt="punpilas prakenree" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='PP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117065817640848787604?hl=en" target="_blank" rel="noopener noreferrer">punpilas prakenree</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Kids had a wonderful time on the disco dome. The dome is well looked after, sturdy and clean. The staff were polite and bang on time. I would recommend Elliot's Bouncy Castle to everyone.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111016599756548481057.webp" srcset="/images/reviewers/111016599756548481057.webp 1x, /images/reviewers/111016599756548481057@2x.webp 2x" alt="Ruby Seera" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111016599756548481057?hl=en" target="_blank" rel="noopener noreferrer">Ruby Seera</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thank you for such a timely set up. The kids had the best time. Great service!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100400190452400724629.webp" srcset="/images/reviewers/100400190452400724629.webp 1x, /images/reviewers/100400190452400724629@2x.webp 2x" alt="Terri Ramadan" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100400190452400724629?hl=en" target="_blank" rel="noopener noreferrer">Terri Ramadan</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I couldn't ask for more. The whole team are really helpful and nice. They always go the extra mile. Their equipment is super clear and in really good condition. They also have a brilliant selection to choose from. We've used them loads and always had a brilliant service from start to finish!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/115321870168467996822.webp" srcset="/images/reviewers/115321870168467996822.webp 1x, /images/reviewers/115321870168467996822@2x.webp 2x" alt="Louise Goldsmith" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/115321870168467996822?hl=en" target="_blank" rel="noopener noreferrer">Louise Goldsmith</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thank you for such an amazing supply of inflatables. You were so patient with us and even added to the order last minute to help fulfill our vision. You have all the right paperwork to keep our health and safety officers happy and such great staff on the day. We couldn’t recommend you enough and can’t wait to welcome you back to our school for more events. 🤩</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108619177130564747299.webp" srcset="/images/reviewers/108619177130564747299.webp 1x, /images/reviewers/108619177130564747299@2x.webp 2x" alt="Hannah Wootten" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='HW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108619177130564747299?hl=en" target="_blank" rel="noopener noreferrer">Hannah Wootten</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Really great service. Helped me decide which castle to go for, arrived early to deliver and on time to collect. Fantastic overall!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101161455089648915736.webp" srcset="/images/reviewers/101161455089648915736.webp 1x, /images/reviewers/101161455089648915736@2x.webp 2x" alt="Julie Peacock" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101161455089648915736?hl=en" target="_blank" rel="noopener noreferrer">Julie Peacock</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent customer service, very friendly would definitely recommend</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0zsqbHBB12prptg.webp" srcset="/images/reviewers/fb-pfbid0zsqbHBB12prptg.webp 1x, /images/reviewers/fb-pfbid0zsqbHBB12prptg@2x.webp 2x" alt="Sophie Barrett" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/sophie.rackley.1/posts/pfbid0abTuCLUJwUvmA9D7cw5D5GwiMZJcQfrHQB28LRceN3udYynyeD5y15r5bFpZF7iql" target="_blank" rel="noopener noreferrer">Sophie Barrett</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">staff was amazing very friendly and helpful highly recommend this company just perfect very easy to book and they was just brilliant</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/110883644412880100881.webp" srcset="/images/reviewers/110883644412880100881.webp 1x, /images/reviewers/110883644412880100881@2x.webp 2x" alt="Hayley Cook" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='HC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/110883644412880100881?hl=en" target="_blank" rel="noopener noreferrer">Hayley Cook</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We used Elliott's for my daughter's 2nd Birthday party. They were immensely helpful with our decision making process .. knew the venue and was able to advise us what would fit etc (and stopped us going too overboard!). On the day, the team were friendly yet fast and efficient! Will definitely use them again!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113531579508358708601.webp" srcset="/images/reviewers/113531579508358708601.webp 1x, /images/reviewers/113531579508358708601@2x.webp 2x" alt="Matthew Townend" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113531579508358708601?hl=en" target="_blank" rel="noopener noreferrer">Matthew Townend</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service from start to finish.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/112562140445992145523.webp" srcset="/images/reviewers/112562140445992145523.webp 1x, /images/reviewers/112562140445992145523@2x.webp 2x" alt="Aidy Preston" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/112562140445992145523?hl=en" target="_blank" rel="noopener noreferrer">Aidy Preston</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service fantastic communication would recommend to all</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/107587156938097606534.webp" srcset="/images/reviewers/107587156938097606534.webp 1x, /images/reviewers/107587156938097606534@2x.webp 2x" alt="Manic Bouncy Castle" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/107587156938097606534?hl=en" target="_blank" rel="noopener noreferrer">Manic Bouncy Castle</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great company and friendly staff</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106893102496316966754.webp" srcset="/images/reviewers/106893102496316966754.webp 1x, /images/reviewers/106893102496316966754@2x.webp 2x" alt="Liam Walker" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106893102496316966754?hl=en" target="_blank" rel="noopener noreferrer">Liam Walker</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service from start to finish , professionall clean inflatables and very reliable</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117244977481671475093.webp" srcset="/images/reviewers/117244977481671475093.webp 1x, /images/reviewers/117244977481671475093@2x.webp 2x" alt="Abbie Shillibeer" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117244977481671475093?hl=en" target="_blank" rel="noopener noreferrer">Abbie Shillibeer</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">100% recommend and will be using again! I ordered the unicorn soft play set and air juggler ball pit for my Daughter's 1st birthday and was so happy with the pricing, quality and service. The equipment was clean, colourful and fun which the kiddies loved! The service was faultless from start to finish, with good communication and lovely friendly staff!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109306127657580509949.webp" srcset="/images/reviewers/109306127657580509949.webp 1x, /images/reviewers/109306127657580509949@2x.webp 2x" alt="Amy Obrien" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AO'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109306127657580509949?hl=en" target="_blank" rel="noopener noreferrer">Amy Obrien</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent event ! SEN events are like gold dust so when I saw this I booked instantly. My kids had the best day, very well organised, staff were lovely and I had a stress free afternoon not worrying about my kids behaviour. Will defiantly be booking again</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0yctL8ZNT3R3Bj3.webp" srcset="/images/reviewers/fb-pfbid0yctL8ZNT3R3Bj3.webp 1x, /images/reviewers/fb-pfbid0yctL8ZNT3R3Bj3@2x.webp 2x" alt="Anna Wydra" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/anna.wydra.77/posts/pfbid02NBYuiMzuXuzLFVpgTBWpydiLr6BkmNkSV6hYNV9PZHtLLMMVJm6iTDixbCdGLAfgl" target="_blank" rel="noopener noreferrer">Anna Wydra</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I used Elliott’s Bouncy Castle Hire for my son’s birthday in July and I couldn’t be any more happy I highly recommend. Kids had great fun and the customer service was excellent l.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02B5yYr3M2egtJ3.webp" srcset="/images/reviewers/fb-pfbid02B5yYr3M2egtJ3.webp 1x, /images/reviewers/fb-pfbid02B5yYr3M2egtJ3@2x.webp 2x" alt="Carol Atkins" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CA'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/carol.atkins.58/posts/pfbid02dFtQSvQa4Q4tzS59A9T8GeUzZPEKH9UdyGP3v6ThDBwzgRLMF9sMscAWkno6HwgYl" target="_blank" rel="noopener noreferrer">Carol Atkins</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">A huge thank you to Spenser and his team for all their hard your at our 10th birthday party yesterday.
+10 inflatables delivered, maned and packed away with absolutely no fuss or drama what so ever. 
+Great price
+Great team
+Quality castles
+Wow highly recommend 
+Thank you</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117386913297987681797.webp" srcset="/images/reviewers/117386913297987681797.webp 1x, /images/reviewers/117386913297987681797@2x.webp 2x" alt="Carrie Townsend" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117386913297987681797?hl=en" target="_blank" rel="noopener noreferrer">Carrie Townsend</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We recently used Elliott's bouncy castles for our Year 6 leavers party. They did us a fantastic deal, the equipment was clean, safe and brilliant and the children had an amazing time. I wouldn't hesitate to recommend them to anyone. Five star service all the way through, responded quickly, dropped off & picked up as requested. I wouldn't look to use anyone else in the future for similar events, will definitely book again.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113908857159886302840.webp" srcset="/images/reviewers/113908857159886302840.webp 1x, /images/reviewers/113908857159886302840@2x.webp 2x" alt="Grace" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='G'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113908857159886302840?hl=en" target="_blank" rel="noopener noreferrer">Grace</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Simple, fast and efficient service. Communication was excellent. Delivery guys were friendly and arrived on time. Would use again and highly recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0PL4TsmtiW99CUz.webp" srcset="/images/reviewers/fb-pfbid0PL4TsmtiW99CUz.webp 1x, /images/reviewers/fb-pfbid0PL4TsmtiW99CUz@2x.webp 2x" alt="Lauren Wade" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/lauren.walters.79/posts/pfbid0o1hrnvwyY1PPuazdbWfX6TMf6vyXTUH4vsAmnLPTKP4eBNmFnjJfUjac1Xtvn3yrl" target="_blank" rel="noopener noreferrer">Lauren Wade</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Brilliant bouncy castle, exactly what we wanted - would highly recommend the disco and slide bouncy castle, what more could you ask for! The delivery, set up and collection were great too. Thank you so much! Will be using you again for the next parties!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109417259990381233309.webp" srcset="/images/reviewers/109417259990381233309.webp 1x, /images/reviewers/109417259990381233309@2x.webp 2x" alt="Marius Rau" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109417259990381233309?hl=en" target="_blank" rel="noopener noreferrer">Marius Rau</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Best services , Verry friendly staff.
+I will them again.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108714349146771367076.webp" srcset="/images/reviewers/108714349146771367076.webp 1x, /images/reviewers/108714349146771367076@2x.webp 2x" alt="Matt Stevens" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108714349146771367076?hl=en" target="_blank" rel="noopener noreferrer">Matt Stevens</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service - friendly and helpful
+Arrived on time for drop of and collection
+
+Would highly recommend and will definitely be using in the future
+
+👌🏻</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/114306390771419486479.webp" srcset="/images/reviewers/114306390771419486479.webp 1x, /images/reviewers/114306390771419486479@2x.webp 2x" alt="Ben Henderson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='BH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/114306390771419486479?hl=en" target="_blank" rel="noopener noreferrer">Ben Henderson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service made my sons birthday, real friendly guys wont hesitate to use again, kids had great fun in the disco dome!!
+Thanks Elliott bouncy castles!!!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02kCero8EJ3f8KG.webp" srcset="/images/reviewers/fb-pfbid02kCero8EJ3f8KG.webp 1x, /images/reviewers/fb-pfbid02kCero8EJ3f8KG@2x.webp 2x" alt="Max Caudell" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/max.caudell.71/posts/pfbid0bGLtuioBGwVFiWoehqbX8ZrfrX6WyksUNt5DjU4YqBj4jKwEFgBH5z3o2t4yBadml" target="_blank" rel="noopener noreferrer">Max Caudell</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Amazing 😊 would highly recommend... Highed the disco dome bouncy castle for my boy birthday... Was brilliant. Fantastic communication. Definitely know who to go to when i need a bouncy castle again. Thank you so much 🤗</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0WXgRA1dzRsNrDT.webp" srcset="/images/reviewers/fb-pfbid0WXgRA1dzRsNrDT.webp 1x, /images/reviewers/fb-pfbid0WXgRA1dzRsNrDT@2x.webp 2x" alt="Stacey Etherington" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/stacey.etherington.1/posts/pfbid0ArepBJXaytVLaCoeqvEk4W7QWD3F2bL2tiinXqsNiKMods9bSNmTRwz2KsB9HVB3l" target="_blank" rel="noopener noreferrer">Stacey Etherington</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Highly recommend friendly, caring, family business. Gorgeous quality inflatables.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/116052359485589474097.webp" srcset="/images/reviewers/116052359485589474097.webp 1x, /images/reviewers/116052359485589474097@2x.webp 2x" alt="Louise Sparham" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/116052359485589474097?hl=en" target="_blank" rel="noopener noreferrer">Louise Sparham</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Where do I start? This family business goes above and beyond ⭐️⭐️⭐️ They are a fantastic company and family dinner have amazing variety off bouncy castles. We were lucky to have the disco dome during lockdown and there Covid measures and practice they imply to make you safe and the castles safe for use during this pandemic is phenomenal. Thankyou once again or providing some safe fun during a horrible pandemic 😷 💚⭐️</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/105493526830798975049.webp" srcset="/images/reviewers/105493526830798975049.webp 1x, /images/reviewers/105493526830798975049@2x.webp 2x" alt="James Westpfel" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/105493526830798975049?hl=en" target="_blank" rel="noopener noreferrer">James Westpfel</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Fantastic efficient service from start to finish, if you are looking to hire a bouncy castle look no further than Elliots Bouncy Castle hire. I will certainly be using them again.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0DHkcCPHWGz25KS.webp" srcset="/images/reviewers/fb-pfbid0DHkcCPHWGz25KS.webp 1x, /images/reviewers/fb-pfbid0DHkcCPHWGz25KS@2x.webp 2x" alt="Robert Tobin" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/robert.tobin.9655/posts/pfbid0vMJBaj9hPc7E8sp6bkh2PnM9JYVPozd6GqraGz7MLzeRVKUzBiTDypeisBX14ph7l" target="_blank" rel="noopener noreferrer">Robert Tobin</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">he was friendly and easy guy to get on with also made the boys 10th birthday with the music to such a great idea would defo use him again</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02QG1VWfqDgnHYZ.webp" srcset="/images/reviewers/fb-pfbid02QG1VWfqDgnHYZ.webp 1x, /images/reviewers/fb-pfbid02QG1VWfqDgnHYZ@2x.webp 2x" alt="Gemma Murrells" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/gemma.waterman.9/posts/pfbid0kc2TcxHKzPYZcJjjrjHzqf9e4nsur3bNqe8dzNeH28fbSGMAiVsx7YN5QKtPU7gMl" target="_blank" rel="noopener noreferrer">Gemma Murrells</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We hired a bouncy castle today for my sons 2nd birthday.... the whole experience was fab. Great communication beforehand, non contact delivery and collection and a spray of anti bac before they left my garden. We had the castle for almost 11 hours today and my kids didn’t stop bouncing</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0RMu3vTFYDKyGdh.webp" srcset="/images/reviewers/fb-pfbid0RMu3vTFYDKyGdh.webp 1x, /images/reviewers/fb-pfbid0RMu3vTFYDKyGdh@2x.webp 2x" alt="Matt Hervey" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/permalink.php?story_fbid=pfbid02caTmFkwvvMsmvu45JM8HD8phJwfeMbN5X5YrFUUaXh859y2o38CazLfF2anmaRFWl&id=1340364695" target="_blank" rel="noopener noreferrer">Matt Hervey</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">6 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">What a wonderfully well run family business with as they say the personal touch, we had a childrens party starting later in the day and we just needed the castle for that little bit longer, we just made 1 call and put it in the comments when we ordered online. They were more than happy to help. To go with that, the price was the best in the area for the style of castle we wanted and they just love what they do, so our children had a fantastic day. Would recommend them to everyone and will book them time and time again. Thank you to you both.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108365157691500921451.webp" srcset="/images/reviewers/108365157691500921451.webp 1x, /images/reviewers/108365157691500921451@2x.webp 2x" alt="Steve Hooper" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108365157691500921451?hl=en" target="_blank" rel="noopener noreferrer">Steve Hooper</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Absolutely brilliant service from start to finish. We originally hired 1 castle and 2 bounce slides for our Charity Fun Day in New Ash Green (16/09/18), but due to H&S issues we wanted to cancel the castle and change it for some soft play stuff and bouncy unicorns, this was days before the event, but they were really helpful and manage to change it with no issues. The kids had a great time. I was walked around each slide and was told what I need to look for in terms of safety etc. Great service, great slides and great price. Would definitely recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid037RZUPPr7hhJRc.webp" srcset="/images/reviewers/fb-pfbid037RZUPPr7hhJRc.webp 1x, /images/reviewers/fb-pfbid037RZUPPr7hhJRc@2x.webp 2x" alt="Jack Page" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/jack.page.399/posts/pfbid0K1kXvVgNXAGe2K8UbMLnqYMinaiTyXjxAUFwFLhtkTmCJNc42PJfTwrVmeRqiL92l" target="_blank" rel="noopener noreferrer">Jack Page</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We hired one of the bouncy castles the weekend and they are very good and really clean we will be definitely using you again 🙂</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02rwrnmvX8FVY7A.webp" srcset="/images/reviewers/fb-pfbid02rwrnmvX8FVY7A.webp 1x, /images/reviewers/fb-pfbid02rwrnmvX8FVY7A@2x.webp 2x" alt="Donna Turner" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/donna.turner.7374/posts/pfbid02rFYbkJCAu4LRZLS6dFvHYuKt2wMMX16aUhqo1PYhfhmWEgowDSuPrJq4LRxxapRPl" target="_blank" rel="noopener noreferrer">Donna Turner</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">3rd time using your bouncy castles & once again a happy customer. 100% recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-536959174.webp" srcset="/images/reviewers/fb-536959174.webp 1x, /images/reviewers/fb-536959174@2x.webp 2x" alt="Claire Silvester" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/C141RE/posts/pfbid02cjJqGB5g7m5eGrCj4PTcALSzz7GfJL7JZSU7KMWej6eFhD7Vq4L3bGGaEt7mJu6vl" target="_blank" rel="noopener noreferrer">Claire Silvester</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service and friendly staff, we ordered a bouncy castle and slide for our end of year nursery party. The castles arrived promptly and were ready for when the children arrived. Thanks again x</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101469347595243732330.webp" srcset="/images/reviewers/101469347595243732330.webp 1x, /images/reviewers/101469347595243732330@2x.webp 2x" alt="Kathryn Russell" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101469347595243732330?hl=en" target="_blank" rel="noopener noreferrer">Kathryn Russell</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Absolutely brilliant service from start to finish. We hired 3 castles for our school summer fete  and the kids had a great time. I was walked around each castle and was told what i need to look for in terms of safety etc. Great service, great castles and great price. Would definitely recommend.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0LocLyES3QCZh7j.webp" srcset="/images/reviewers/fb-pfbid0LocLyES3QCZh7j.webp 1x, /images/reviewers/fb-pfbid0LocLyES3QCZh7j@2x.webp 2x" alt="Jack Farnes" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JF'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/jack.farnes.7/posts/pfbid02QCxAEELdXeeakLvvtQaksPtxeais3f6VxRU15cXG7gmo7MYGxYaFvZzNM5c7pBUjl" target="_blank" rel="noopener noreferrer">Jack Farnes</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Our Frozen bouncy castle was delivered early on our party day & we were allowed to choose the time it was picked up which made the day really relaxed. The castle was clearly well maintained & very clean. Very friendly service from the man who delivered it. Our daughter was so happy - thank you very much!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109765386709474170734.webp" srcset="/images/reviewers/109765386709474170734.webp 1x, /images/reviewers/109765386709474170734@2x.webp 2x" alt="A G" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109765386709474170734?hl=en" target="_blank" rel="noopener noreferrer">A G</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service, very competitive price, polite, friendly. Great selection of castles, had the slide and the kids loved it! Thank you.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02E5jDTFVMrA7Mv.webp" srcset="/images/reviewers/fb-pfbid02E5jDTFVMrA7Mv.webp 1x, /images/reviewers/fb-pfbid02E5jDTFVMrA7Mv@2x.webp 2x" alt="Rachel Taylor" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/rachel.page.942/posts/pfbid0wMwe9ZSfvmawZsqtXuvhYgyTbzGnWjrobCRx1bmF2UQEKmrrHCCmPFudgbGMA2ZAl" target="_blank" rel="noopener noreferrer">Rachel Taylor</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We hired a bouncy castle for our sons birthday at the weekend. Very pleased with the communication & friendly service. Will look to use in the future.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0vgQh1RsMhG5jom.webp" srcset="/images/reviewers/fb-pfbid0vgQh1RsMhG5jom.webp 1x, /images/reviewers/fb-pfbid0vgQh1RsMhG5jom@2x.webp 2x" alt="Dani Wallace ッ" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/permalink.php?story_fbid=pfbid036YERuNm9CtNxUuWXNLjPHkvdxmgRBony5uBF6LygrT6DcEtnS6NWCUiRBdaLTZ6Sl&id=651736678" target="_blank" rel="noopener noreferrer">Dani Wallace ッ</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great company, used them for our twins dedication, Noahs ark theme so we had the jungle theme soft play and bouncy castle. It was perfect. Spencer was so helpful and friendly. We couldnt have the soft play out straight away coz of the sunday school so he told us what to do and got it all in the side room for us. Thanks guys</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108394733284548401698.webp" srcset="/images/reviewers/108394733284548401698.webp 1x, /images/reviewers/108394733284548401698@2x.webp 2x" alt="Mini Mayhem Softplay" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108394733284548401698?hl=en" target="_blank" rel="noopener noreferrer">Mini Mayhem Softplay</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Wow what can I say! This company is fantastic, nothing is too much trouble for them and their work is second to none 😁  friendly and helpful staff and I had the privilege to work with Spencer for an amazing charity, that he kindly donated a massive amount 😍  Thank you for everything!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113892570436773390313.webp" srcset="/images/reviewers/113892570436773390313.webp 1x, /images/reviewers/113892570436773390313@2x.webp 2x" alt="Leighton James" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LJ'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113892570436773390313?hl=en" target="_blank" rel="noopener noreferrer">Leighton James</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Absolutely fantastic service would highly recommend to anyone. Very professional and always a pleasure with answering questions if your unsure !</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02bK5AaL8HDYSiX.webp" srcset="/images/reviewers/fb-pfbid02bK5AaL8HDYSiX.webp 1x, /images/reviewers/fb-pfbid02bK5AaL8HDYSiX@2x.webp 2x" alt="Karina Barr" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/karina.elliott.3/posts/pfbid0x8B1cskVkoQo68gzohQPQnEgBq7nphLcmtsFrEZ5S2tQgxuiG7PEzcHzgcojG3Cdl" target="_blank" rel="noopener noreferrer">Karina Barr</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I used Bouncy Castle Hire Bexley yesterday for my son and daughter's joint birthday party and couldn't recommend them highly enough. Very good service received throughout. Sarah and Spencer were quick at responding to my messages and good at offering advice as this was the first children's party I had planned. Prompt with drop off and collection even though my party was slightly out of their normal area. Thank you Spencer and Sarah �</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-100000470952340.webp" srcset="/images/reviewers/fb-100000470952340.webp 1x, /images/reviewers/fb-100000470952340@2x.webp 2x" alt="Graham Till" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/graham.till.73/posts/pfbid02YxtSDbyKY7TAGzHXB1nzjRAYNYemX6zhYLsBHq1P6LfqYSb8WTxCox8bzLmxjaWGl" target="_blank" rel="noopener noreferrer">Graham Till</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Such a great company to deal with. The owners are second to none and great in dealing with what we required, when we used them on wedding marquee job. Thanks again guys keep up the great work.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0vchKzYD28gQBSf.webp" srcset="/images/reviewers/fb-pfbid0vchKzYD28gQBSf.webp 1x, /images/reviewers/fb-pfbid0vchKzYD28gQBSf@2x.webp 2x" alt="Sophie Ansell" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SA'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/sophie.lockwood.378/posts/pfbid02mZcUZeuMFzsKzsVKoCbQkYpuxjJeVnDfPChcGS5vS3QxSiMH1wzFfTgmcjEn6J9xl" target="_blank" rel="noopener noreferrer">Sophie Ansell</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Worked alongside this company a number of times. Excellent customer service and very reliable xx</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/110818301581784104314.webp" srcset="/images/reviewers/110818301581784104314.webp 1x, /images/reviewers/110818301581784104314@2x.webp 2x" alt="Jonny__5" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='J'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/110818301581784104314?hl=en" target="_blank" rel="noopener noreferrer">Jonny__5</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">So glad we fond this company. Had another company cancel on us and they came through with flying colors on a very tight deadline. Not only recommend them for birthdays but for something to make your event even better!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109025468859576659777.webp" srcset="/images/reviewers/109025468859576659777.webp 1x, /images/reviewers/109025468859576659777@2x.webp 2x" alt="Jose Juan" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JJ'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109025468859576659777?hl=en" target="_blank" rel="noopener noreferrer">Jose Juan</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">What can you say. Just great fun for family and your kids.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/105667367809332811781.webp" srcset="/images/reviewers/105667367809332811781.webp 1x, /images/reviewers/105667367809332811781@2x.webp 2x" alt="Shivering Knight" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SK'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/105667367809332811781?hl=en" target="_blank" rel="noopener noreferrer">Shivering Knight</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">OUTSTANDING! customer service, i highly recommend this company for any and all Bounce house needs. All around wonderful experience, Kids loved it, super clean, staff was pleasant and friendly, delivery was on time and driver was helpful and friendly. Absolutely amazing! Job well done!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113292587724542130307.webp" srcset="/images/reviewers/113292587724542130307.webp 1x, /images/reviewers/113292587724542130307@2x.webp 2x" alt="Joshua Boast" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113292587724542130307?hl=en" target="_blank" rel="noopener noreferrer">Joshua Boast</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Spencer is a great guy and is highly recommended!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/114685146127762356869.webp" srcset="/images/reviewers/114685146127762356869.webp 1x, /images/reviewers/114685146127762356869@2x.webp 2x" alt="Phil Wo" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='PW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/114685146127762356869?hl=en" target="_blank" rel="noopener noreferrer">Phil Wo</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Look no further than Bouncy Castle Hire Bexley for your next party. They are the absolute best.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111103696322008548126.webp" srcset="/images/reviewers/111103696322008548126.webp 1x, /images/reviewers/111103696322008548126@2x.webp 2x" alt="JJs “Jay” Party Time" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='J“'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111103696322008548126?hl=en" target="_blank" rel="noopener noreferrer">JJs “Jay” Party Time</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thanks for helping out improve my service</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109745930161268192817.webp" srcset="/images/reviewers/109745930161268192817.webp 1x, /images/reviewers/109745930161268192817@2x.webp 2x" alt="ian randerson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='IR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109745930161268192817?hl=en" target="_blank" rel="noopener noreferrer">ian randerson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">excellent service castle was imaculate ,delivery was as requested  and on time and very efficient  would definatly recomend  thank you</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100994579407982015369.webp" srcset="/images/reviewers/100994579407982015369.webp 1x, /images/reviewers/100994579407982015369@2x.webp 2x" alt="joe deluise" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JD'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100994579407982015369?hl=en" target="_blank" rel="noopener noreferrer">joe deluise</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thank you very much Bouncy Castle Hire Bexley for the brilliant slush machine package, the kids bounced all day on the castle and even the Adults enjoyed the slush! See you next year!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/116819735644959209265.webp" srcset="/images/reviewers/116819735644959209265.webp 1x, /images/reviewers/116819735644959209265@2x.webp 2x" alt="Lo'is Palmer" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/116819735644959209265?hl=en" target="_blank" rel="noopener noreferrer">Lo'is Palmer</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Really genuine guy, nothing too much trouble. Thanks again for all your help and advise!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117458712200351853568.webp" srcset="/images/reviewers/117458712200351853568.webp 1x, /images/reviewers/117458712200351853568@2x.webp 2x" alt="gregg bisbee" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117458712200351853568?hl=en" target="_blank" rel="noopener noreferrer">gregg bisbee</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Very good staff, kids loved it</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/116243498199125828809.webp" srcset="/images/reviewers/116243498199125828809.webp 1x, /images/reviewers/116243498199125828809@2x.webp 2x" alt="Russell J Temple" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RJ'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/116243498199125828809?hl=en" target="_blank" rel="noopener noreferrer">Russell J Temple</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Outstanding experience and customer service. Products showed up as expected in high quality condition, clean, and everyone loved it. May have pushed the boundaries with a few adults wanting to take part but folks at Bouncy Castle were good sports about it.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid027Kt9x5VzrfNri.webp" srcset="/images/reviewers/fb-pfbid027Kt9x5VzrfNri.webp 1x, /images/reviewers/fb-pfbid027Kt9x5VzrfNri@2x.webp 2x" alt="Sarah Ellen Foster" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/sarah.fosterwashyde/posts/pfbid026jvFLHRBySiQEEZ4697tHK4B3RyHqosRYxnsXXRKAfu8ycJcT8tJUHnMEiRw5oqml" target="_blank" rel="noopener noreferrer">Sarah Ellen Foster</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Have previously used this company for my girls birthday parties! Nothing too much trouble, friendly and very professional and came and set up inflatables and packed away with no hassle !! Highly recommend and look forward to using again for future parties! Thanks very much! Xx</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108328567355250994724.webp" srcset="/images/reviewers/108328567355250994724.webp 1x, /images/reviewers/108328567355250994724@2x.webp 2x" alt="Laura Strong" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108328567355250994724?hl=en" target="_blank" rel="noopener noreferrer">Laura Strong</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great company. They were very polite and on time. Would definitely recommend. The castle was great too.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/105918958413760005504.webp" srcset="/images/reviewers/105918958413760005504.webp 1x, /images/reviewers/105918958413760005504@2x.webp 2x" alt="Victoria Ashman" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='VA'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/105918958413760005504?hl=en" target="_blank" rel="noopener noreferrer">Victoria Ashman</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great choice of bouncy castles, very friendly company. Highly recommend!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100927761809213071634.webp" srcset="/images/reviewers/100927761809213071634.webp 1x, /images/reviewers/100927761809213071634@2x.webp 2x" alt="Robert Tarrant" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100927761809213071634?hl=en" target="_blank" rel="noopener noreferrer">Robert Tarrant</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service, fully recommend</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106175028143860749439.webp" srcset="/images/reviewers/106175028143860749439.webp 1x, /images/reviewers/106175028143860749439@2x.webp 2x" alt="Tan Ying Khai" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TY'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106175028143860749439?hl=en" target="_blank" rel="noopener noreferrer">Tan Ying Khai</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">what can i says, best ever. you'll miss out if you stank out</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/105578270522791605730.webp" srcset="/images/reviewers/105578270522791605730.webp 1x, /images/reviewers/105578270522791605730@2x.webp 2x" alt="Aston Ellington" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/105578270522791605730?hl=en" target="_blank" rel="noopener noreferrer">Aston Ellington</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">This company are lifesavers. My first booking cancelled on me just before my sons birthday but they were very understanding and were able to cater to my last second booking. Top notch customer service and they will be my first port of call next time</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100937725823008339073.webp" srcset="/images/reviewers/100937725823008339073.webp 1x, /images/reviewers/100937725823008339073@2x.webp 2x" alt="Peter Andersson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='PA'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100937725823008339073?hl=en" target="_blank" rel="noopener noreferrer">Peter Andersson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent selection and very friendly crew</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111629481799555119459.webp" srcset="/images/reviewers/111629481799555119459.webp 1x, /images/reviewers/111629481799555119459@2x.webp 2x" alt="Sarah Elliott" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111629481799555119459?hl=en" target="_blank" rel="noopener noreferrer">Sarah Elliott</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I can personally vouch for this company, very friendly and very reliable!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0kAaZzVnjqq5BoQ.webp" srcset="/images/reviewers/fb-pfbid0kAaZzVnjqq5BoQ.webp 1x, /images/reviewers/fb-pfbid0kAaZzVnjqq5BoQ@2x.webp 2x" alt="Ash Powell" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/ash.powell.142/posts/pfbid0YVawzABpsrYXCStZ94uHM45aofTDk3tn3EjGDQGJWcE4xTLY4inNdjcA5DtX6qNZl" target="_blank" rel="noopener noreferrer">Ash Powell</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Cracking service 
+Polite staff and a nice selection of inflatables 
+Highly recommend bouncy castle hire bexley for all your children's parties ��</div>
+      </div>
+    </div>
+    <div class="reviews-column reviews-column-right">
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111264124718229461903.webp" srcset="/images/reviewers/111264124718229461903.webp 1x, /images/reviewers/111264124718229461903@2x.webp 2x" alt="Stacey Etherington" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111264124718229461903?hl=en" target="_blank" rel="noopener noreferrer">Stacey Etherington</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">9 months ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Brilliant company!!! If I could give more than five stars I would. Always updating their castles and equipment to the latest designs, beautifully clean, and 100% reliable.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109187734872774381083.webp" srcset="/images/reviewers/109187734872774381083.webp 1x, /images/reviewers/109187734872774381083@2x.webp 2x" alt="Barney H" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='BH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109187734872774381083?hl=en" target="_blank" rel="noopener noreferrer">Barney H</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We were really impressed with Elliot’s Bouncy Castles. They arrived on time and the set up and take down was extremely efficient. The castle was perfect and the kids loved it! Thank you. Have recommended to my friends.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/112001723942391304537.webp" srcset="/images/reviewers/112001723942391304537.webp 1x, /images/reviewers/112001723942391304537@2x.webp 2x" alt="emma theobald" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='ET'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/112001723942391304537?hl=en" target="_blank" rel="noopener noreferrer">emma theobald</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">As always Spencer has been amazing, helping us with a family fun day for staff - being so flexible on times, and amazing prices. Will always 100% reccomend</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0VgyLzPPQY1r94G.webp" srcset="/images/reviewers/fb-pfbid0VgyLzPPQY1r94G.webp 1x, /images/reviewers/fb-pfbid0VgyLzPPQY1r94G@2x.webp 2x" alt="Tabitha Grimes" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/tabitha.smith.35/posts/pfbid0LmyLEC7RUKhwB3iayh9Q2SjeZvmGkqr3k7sfDg6mUrg41uKhwagqiQRt3QvJF4EQl" target="_blank" rel="noopener noreferrer">Tabitha Grimes</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">1 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We've just had my daughter's birthday party and I couldn't recommend Spencer and team enough! Professional with an awesome choice of equipment, nothing was too much. Anything we needed help with was sorted quickly and smoothly. Definitely be using Elliott's again. Thank you 😊</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111449779848282673705.webp" srcset="/images/reviewers/111449779848282673705.webp 1x, /images/reviewers/111449779848282673705@2x.webp 2x" alt="George Cottle" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111449779848282673705?hl=en" target="_blank" rel="noopener noreferrer">George Cottle</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I took my 2 year old daughter to Elliott’s bouncy castle event in Welling school, she loved the inflatable assault courses, big slides and bouncy castles. Staff were brilliant, they would hold back the bigger kids as the smaller kids climbed the ladders to go up the slides. It was sold out and still wasn’t over crowded, hot dogs were good too.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103724964960695631660.webp" srcset="/images/reviewers/103724964960695631660.webp 1x, /images/reviewers/103724964960695631660@2x.webp 2x" alt="Brie Lenn" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='BL'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103724964960695631660?hl=en" target="_blank" rel="noopener noreferrer">Brie Lenn</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Very good service. Fast replies thru text. The bouncy castle was amazing, the kids had fun and it felt safe inside it. Price was good and worth it. I highly recommend. Delivery and collection was no hassle.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100630776758424279731.webp" srcset="/images/reviewers/100630776758424279731.webp 1x, /images/reviewers/100630776758424279731@2x.webp 2x" alt="Lamiya Mekkaoui" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100630776758424279731?hl=en" target="_blank" rel="noopener noreferrer">Lamiya Mekkaoui</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">2 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I am so grateful to this company for helping me finding an amazing bouncy castle for a birthday party. The gentleman that I dealt with was extremely friendly, patient and understood why it was very important to me! Many thanks! ☺️</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02wih5QqwgtLxCt.webp" srcset="/images/reviewers/fb-pfbid02wih5QqwgtLxCt.webp 1x, /images/reviewers/fb-pfbid02wih5QqwgtLxCt@2x.webp 2x" alt="Lana Whitewood" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/lana.barker.14/posts/pfbid0PYjEHHSaCCAw3BnaH2vAe9ypQ1YLG13bnNwQ9Zk3RqLw1Y3aFZQAhDggBAY53vR4l" target="_blank" rel="noopener noreferrer">Lana Whitewood</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">If you are looking for a unique professional company for bouncy castle hire, if you havnt used this company  before  I cannot recommend them enough we have hired from Spencer several times now and have never been disappointed today we hired this bouncy castle for my daughter and this made her party and her day 💟 Spencer and his team are reliable friendly service who go above and beyond to fit the customers needs and always deliver with a smile.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/107641799619215971368.webp" srcset="/images/reviewers/107641799619215971368.webp 1x, /images/reviewers/107641799619215971368@2x.webp 2x" alt="M Hyslop" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/107641799619215971368?hl=en" target="_blank" rel="noopener noreferrer">M Hyslop</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Quick efficient service!! Many Thanks!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108100397149608760356.webp" srcset="/images/reviewers/108100397149608760356.webp 1x, /images/reviewers/108100397149608760356@2x.webp 2x" alt="Mark Rubiolo" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108100397149608760356?hl=en" target="_blank" rel="noopener noreferrer">Mark Rubiolo</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great company, efficient and spotless.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/107172973400897441157.webp" srcset="/images/reviewers/107172973400897441157.webp 1x, /images/reviewers/107172973400897441157@2x.webp 2x" alt="Graham Goulden" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/107172973400897441157?hl=en" target="_blank" rel="noopener noreferrer">Graham Goulden</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">When planning a Party There's only one place to go for your Bouncy Castles and that's Elliot's.  Castles are clean and delivered on time by a friendly team, couldn't ask for better really.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109016915593546484250.webp" srcset="/images/reviewers/109016915593546484250.webp 1x, /images/reviewers/109016915593546484250@2x.webp 2x" alt="Ricardo Garcia" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109016915593546484250?hl=en" target="_blank" rel="noopener noreferrer">Ricardo Garcia</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">3 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service and great packages deal for any event. Kids had a great time on bouncy castle and ball pit.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0RcCrWEm7ft3Nzm.webp" srcset="/images/reviewers/fb-pfbid0RcCrWEm7ft3Nzm.webp 1x, /images/reviewers/fb-pfbid0RcCrWEm7ft3Nzm@2x.webp 2x" alt="Natalie Newman" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='NN'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/natalie.newman.376/posts/pfbid02RikpZwWL6jba2i6TEwdphvsnEoRw7WfP7Co7asWe9J5C2QqjbZjfzmiQcmZFdvy8l" target="_blank" rel="noopener noreferrer">Natalie Newman</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Absolutely amazing ! the range they have the service second to none ! thank you so much !</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103129727457620974012.webp" srcset="/images/reviewers/103129727457620974012.webp 1x, /images/reviewers/103129727457620974012@2x.webp 2x" alt="Katie Kline" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KK'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103129727457620974012?hl=en" target="_blank" rel="noopener noreferrer">Katie Kline</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Would highly recommend this company! 5 Star service.
+
+Clear communication, booked with ease, the service was friendly and efficient for delivery/collection.
+
+Our son and his friends had a great time on the super hero themed bouncy castle and ball pit package, it is fantastic value for money!
+
+We will definitely use them again and have already recommended to family and friends for future occasions. Thank you!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/115071023525030439637.webp" srcset="/images/reviewers/115071023525030439637.webp 1x, /images/reviewers/115071023525030439637@2x.webp 2x" alt="Heidi Tait" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='HT'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/115071023525030439637?hl=en" target="_blank" rel="noopener noreferrer">Heidi Tait</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Having used the same bouncy castle company for many years I felt I had to change as they were falling below safety standards and just not professional….. I stumbled upon Elliots Bouncy Castles on a search engine and was very impressed…… dressed in a uniform and friendly and professional, arrived on time, double checked safety and explained everything…… Castle was clean and well maintained, pickup was as arranged and all went smoothly, will definitely use again…. Thankyou</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100229150474639788790.webp" srcset="/images/reviewers/100229150474639788790.webp 1x, /images/reviewers/100229150474639788790@2x.webp 2x" alt="Steve Baker" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100229150474639788790?hl=en" target="_blank" rel="noopener noreferrer">Steve Baker</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Spencer is one of the nicest guys you could meet helped me out an awful lot through the Years can highly recommend his professionalism</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103562335031594114760.webp" srcset="/images/reviewers/103562335031594114760.webp 1x, /images/reviewers/103562335031594114760@2x.webp 2x" alt="Amber Williams" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103562335031594114760?hl=en" target="_blank" rel="noopener noreferrer">Amber Williams</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Cannot fault! I hired a bouncy castle and ball pit for my sons 1st birthday and i was certainly not disappointed! Excellent communication from the very first enquiry, was given lots of choice about different products and recommendations of what best suited my age group. Fantastic value for money and very pleasant and smartly dressed staff who did set up and dismantled. Will certainly use again! Very happy children! Thank you so much!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02vdnav7DW9JwoW.webp" srcset="/images/reviewers/fb-pfbid02vdnav7DW9JwoW.webp 1x, /images/reviewers/fb-pfbid02vdnav7DW9JwoW@2x.webp 2x" alt="Beverley Scarsbrook" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='BS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/beverley.scarsbrook.7/posts/pfbid036gK8o8yN4po6W9chbF7Cm4sS89sDC7TzAp53Ao4uSvb37QDH5R8wvMdZGK9Eu4drl" target="_blank" rel="noopener noreferrer">Beverley Scarsbrook</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thank you Elliots bouncy castle for the second year running…my grandson had the best party with he’s school friends in the disco pod , would and have highly recommend this and will definitely be booking again 👍😀</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02bCr9C1kE8yD28.webp" srcset="/images/reviewers/fb-pfbid02bCr9C1kE8yD28.webp 1x, /images/reviewers/fb-pfbid02bCr9C1kE8yD28@2x.webp 2x" alt="Georgette Woods" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/georgette.stammers/posts/pfbid0pt9hvBQBQT7Z6YFKB6QRGdPVkmRW5HU1ySkCuPs1Vcqti2qFBaiFGdhtZMsxbh2Ll" target="_blank" rel="noopener noreferrer">Georgette Woods</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Absolutely fantastic bouncy castle hire. 
+Due to covid I had to spread my sons 3rd birthday over two days and the team at Elliots Bouncy castle hire couldn’t have been more accommodating! We’re already looking at another two day hire in the summer holidays as the kids absolutely loved it! We are now customers for life 👍🏼</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02H1mYUocTKYWRL.webp" srcset="/images/reviewers/fb-pfbid02H1mYUocTKYWRL.webp 1x, /images/reviewers/fb-pfbid02H1mYUocTKYWRL@2x.webp 2x" alt="Kelly Seager" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/kelly.seager.56/posts/pfbid02PMokXo4wvbk5vjHkWTutnPotfeRLUSSUXg34J8E1UzCyvJPo9YGKHAiTTSF2jUqSl" target="_blank" rel="noopener noreferrer">Kelly Seager</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Fantastic company, they were so accommodating with our booking and friendly over email / phone and in person when setting up and removing the bouncy castle.
+Would definitely use again and recommend to anyone.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0NLBLzMtATxjUiZ.webp" srcset="/images/reviewers/fb-pfbid0NLBLzMtATxjUiZ.webp 1x, /images/reviewers/fb-pfbid0NLBLzMtATxjUiZ@2x.webp 2x" alt="Nicole Barrow" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='NB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0kWTR6cnpeDWVim2G2w1PsVi49SWXi3GNFgwp6fwaiKQFfXNbVZZvDVW8bd7Wk8g7l&id=100011393538196" target="_blank" rel="noopener noreferrer">Nicole Barrow</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">4 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Brilliant service, covid safe delivery. Kids loved the bouncy castle it made a lockdown birthday very special. Would highly recommend. Will definitely be using again. Thank you!!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0uSf753NKv7hBMQ.webp" srcset="/images/reviewers/fb-pfbid0uSf753NKv7hBMQ.webp 1x, /images/reviewers/fb-pfbid0uSf753NKv7hBMQ@2x.webp 2x" alt="Amy Imber" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AI'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/amy.imber.7/posts/pfbid076LmxAp7Awt9kyxYLNKLtHhbkMG3EQYTAinW4nZfe4p7vn8bnzX9zZUMW7p9voQ3l" target="_blank" rel="noopener noreferrer">Amy Imber</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">A great professional experience from start to finish. The kids had the best time on the fun run. Would highly recommend. Really friendly, fast responses and top quality bouncy castle! Will definitely use again in the future. x</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0BAzyvaxpnnVTbW.webp" srcset="/images/reviewers/fb-pfbid0BAzyvaxpnnVTbW.webp 1x, /images/reviewers/fb-pfbid0BAzyvaxpnnVTbW@2x.webp 2x" alt="Laura Eve" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/laura.eve99/posts/pfbid02V1f19SRUjMGWBCRnfznKNmjhFU5iPxuoj5tbvdybsMvZB8BRJpmZEtB9cmk4JJA5l" target="_blank" rel="noopener noreferrer">Laura Eve</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great service, the castle was very clean and safe for kids to use. Will use again, thank you 😊</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02t3qkKqxwVQmhe.webp" srcset="/images/reviewers/fb-pfbid02t3qkKqxwVQmhe.webp 1x, /images/reviewers/fb-pfbid02t3qkKqxwVQmhe@2x.webp 2x" alt="Martin Mason" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/martin.mason.758/posts/pfbid0227oo7VuNzJ6ffRHcrBbwCCy7RucHn35RJuKX7t5ppCEpfvsjvHRGEo1vUjqoc2Zbl" target="_blank" rel="noopener noreferrer">Martin Mason</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Delivered 2 hours before and picked it up a little later so my daughter had more time on it for her birthday. Unbelievable service and I would highly recommend to anyone. Will definitely be recommending to friends and family. Thank you 🙏</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0kmxr2AKidcRy17.webp" srcset="/images/reviewers/fb-pfbid0kmxr2AKidcRy17.webp 1x, /images/reviewers/fb-pfbid0kmxr2AKidcRy17@2x.webp 2x" alt="Tamsyn Clark" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/tamsyn.clark.3/posts/pfbid0QpzW2LJRKjUWWhFTMxVpnTZ29PfoSXXd8rCwfJ9Bi5BPjWAEkd6ySE9S5NwPmKHJl" target="_blank" rel="noopener noreferrer">Tamsyn Clark</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">5 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service and felt very confident that they were taking the Covid 19 situation seriously.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106845179742992553572.webp" srcset="/images/reviewers/106845179742992553572.webp 1x, /images/reviewers/106845179742992553572@2x.webp 2x" alt="Nicola Blake" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='NB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106845179742992553572?hl=en" target="_blank" rel="noopener noreferrer">Nicola Blake</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">6 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Friendly  helpful staff.  Arrived at exactly  the time arranged. Reasonably priced. Will definitely  use again.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111873760331519244557.webp" srcset="/images/reviewers/111873760331519244557.webp 1x, /images/reviewers/111873760331519244557@2x.webp 2x" alt="Monique D" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MD'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111873760331519244557?hl=en" target="_blank" rel="noopener noreferrer">Monique D</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">6 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">really easy to book online, picked the bouncy castle I wanted and it was delivered bright and early in time for my daughters birthday party and stayed with us till 7pm! Great quality, great price, clean and was a great addition to the party, thankyou</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02ZHTGjHv7Cg7VW.webp" srcset="/images/reviewers/fb-pfbid02ZHTGjHv7Cg7VW.webp 1x, /images/reviewers/fb-pfbid02ZHTGjHv7Cg7VW@2x.webp 2x" alt="Samantha Louise" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='SL'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/srands23/posts/pfbid0pU1rKPbzEmzf8EaN4zvT4ddLPa8RFuAyZNPknZmrRgYL8W2efBZZV9ZCitRbv8Evl" target="_blank" rel="noopener noreferrer">Samantha Louise</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">6 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Amazing company. We had a low height castle & it was perfect. The children loved it. I will definitely use Boucny Castle Hire Bexley again & will tell my friends & family to use them too. Thank you</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0xA2fh5wZhVTauM.webp" srcset="/images/reviewers/fb-pfbid0xA2fh5wZhVTauM.webp 1x, /images/reviewers/fb-pfbid0xA2fh5wZhVTauM@2x.webp 2x" alt="Kelly Jordan" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KJ'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/kelly.a.jordan.1/posts/pfbid02PVzqgEK9PkY6v4L57G3E69YDBMmFpEKFUzHLpqzhNWTu33StGJDfSRShZPPM5FH7l" target="_blank" rel="noopener noreferrer">Kelly Jordan</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We were let down by another company they just didn't turn up... I called Spencer and he came strait down to us, done us a good deal and we had lots of happy children. We can't thank you enough Spencer, and will be giving you all our custom in future..
+Regards 
+The castle tots team</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02Ytr5473fBtzms.webp" srcset="/images/reviewers/fb-pfbid02Ytr5473fBtzms.webp 1x, /images/reviewers/fb-pfbid02Ytr5473fBtzms@2x.webp 2x" alt="Donna Henty" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/donna.henty.3/posts/pfbid0JWUwtwmfsqEfSKKLvfeRsFqXWBn8ZhYiqqAdDrBrMxdZhuRwMNFzVgYmwP6DGLbjl" target="_blank" rel="noopener noreferrer">Donna Henty</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We had a fun run & bouncy slide today and couldn’t be more pleased with the service, so helpful and reliable highly recommend and will defo use again in future thanks x</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/108390205382644816651.webp" srcset="/images/reviewers/108390205382644816651.webp 1x, /images/reviewers/108390205382644816651@2x.webp 2x" alt="Aramis Herrera" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='AH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/108390205382644816651?hl=en" target="_blank" rel="noopener noreferrer">Aramis Herrera</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">My son and his friends loved it, great service and price, I highly recommend them.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/104663400683965808545.webp" srcset="/images/reviewers/104663400683965808545.webp 1x, /images/reviewers/104663400683965808545@2x.webp 2x" alt="Jon Fretthold" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JF'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/104663400683965808545?hl=en" target="_blank" rel="noopener noreferrer">Jon Fretthold</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Bouncy castle was a great time for the kids, clean and fun for all!  Delivery was very prompt and the driver was quite nice.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101120097559103677133.webp" srcset="/images/reviewers/101120097559103677133.webp 1x, /images/reviewers/101120097559103677133@2x.webp 2x" alt="Eric Harris (EH2014)" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='EH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101120097559103677133?hl=en" target="_blank" rel="noopener noreferrer">Eric Harris (EH2014)</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">My daughter and her friends had such a fun day in the bouncy castle. The castle was very clean and affordably priced. Would highly recommend them to anyone looking to utilize their services.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02oHKcVvcgharHJ.webp" srcset="/images/reviewers/fb-pfbid02oHKcVvcgharHJ.webp 1x, /images/reviewers/fb-pfbid02oHKcVvcgharHJ@2x.webp 2x" alt="Vicky Short" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='VS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/permalink.php?story_fbid=pfbid02ZQLJQpporA91aHEgnLFKmLnxLNt3myvRbd13zb9gakEYTAwU1ZpCZvt1W9b3j9d8l&id=100008160489528" target="_blank" rel="noopener noreferrer">Vicky Short</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">We hired a bouncy castle for my little boys birthday party and it was perfect! They were so friendly and professional from start to finish and made the whole process hassle free. I couldn’t recommend this company enough and I will definitely be using them again! Thank you!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117821725386170019286.webp" srcset="/images/reviewers/117821725386170019286.webp 1x, /images/reviewers/117821725386170019286@2x.webp 2x" alt="Jenny Burns" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JB'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117821725386170019286?hl=en" target="_blank" rel="noopener noreferrer">Jenny Burns</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">I hired a bouncy castle, ball pit and speakers for my 5 year olds birthday party.  From the point of first contact to collection of the equipment at the end of the party I experienced a friendly, informative and professional service that was a pleasure to deal with.  Sarah helped me choose equipment needed and answered all queries and concerns that I had.  The equipment was brilliant - clean and unworn.  I had complete faith and confidence in their knowledge, skill and ability to provide safe inflatables for the party.  I couldn't recommend this company enough, I shall surely be calling upon their services in the future.
+Thank you Sarah and Spencer for helping make 24 kids very happy.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/113431813770910382265.webp" srcset="/images/reviewers/113431813770910382265.webp 1x, /images/reviewers/113431813770910382265@2x.webp 2x" alt="Michele Smith" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/113431813770910382265?hl=en" target="_blank" rel="noopener noreferrer">Michele Smith</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Good service, good price, good communication! Booked the dinosaur bouncy castle for my son birthday party. Arrived on time! Kids loving it. Will recommend to all friends & family. 5 stars !</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/116967838674494997665.webp" srcset="/images/reviewers/116967838674494997665.webp 1x, /images/reviewers/116967838674494997665@2x.webp 2x" alt="Lisa Salih" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/116967838674494997665?hl=en" target="_blank" rel="noopener noreferrer">Lisa Salih</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent company. Helped me when I was let down last minute. Very friendly and helpful. Thank you</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid036BNbnfcBtT2ze.webp" srcset="/images/reviewers/fb-pfbid036BNbnfcBtT2ze.webp 1x, /images/reviewers/fb-pfbid036BNbnfcBtT2ze@2x.webp 2x" alt="Gareth Williams" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/gareth.williams.796/posts/pfbid02fZn6LA5AQAwqjwzNLJ7JpWZ4kmg2nSwwvKw2oKwcnqbB7uAGZcxG1Z2w8k6tNRvZl" target="_blank" rel="noopener noreferrer">Gareth Williams</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Went to my bosses bbq at the weekend and he had the adventure play ground and got to say it was quality even for a 36year old ���� 4 adults all racing on it 
+It was so much fun</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/118137604988269026936.webp" srcset="/images/reviewers/118137604988269026936.webp 1x, /images/reviewers/118137604988269026936@2x.webp 2x" alt="Luke Johnston" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='LJ'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/118137604988269026936?hl=en" target="_blank" rel="noopener noreferrer">Luke Johnston</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Just like to say a massive thank you to Spencer at Bouncy castle hire Bexley even though we are in the same industry Spencer has been great helping me to expand and promote my own business. I Hope I can return the favour one day. Thank you again.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/107490202388418058859.webp" srcset="/images/reviewers/107490202388418058859.webp 1x, /images/reviewers/107490202388418058859@2x.webp 2x" alt="michael hutchinson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/107490202388418058859?hl=en" target="_blank" rel="noopener noreferrer">michael hutchinson</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great company to hire from! Very friendly,  knowledgable and great value for money. If you want to hire from a company who looks after their equipment, sets up safely and is always updating stock, then these are the people to go for!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117816790351063444136.webp" srcset="/images/reviewers/117816790351063444136.webp 1x, /images/reviewers/117816790351063444136@2x.webp 2x" alt="Edward Wright" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='EW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117816790351063444136?hl=en" target="_blank" rel="noopener noreferrer">Edward Wright</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Couldn’t have been more happy with using this company, services was outstanding from start for finish and bouncy castle was amazing.
+
+Thanks guys</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/101510794265921674226.webp" srcset="/images/reviewers/101510794265921674226.webp 1x, /images/reviewers/101510794265921674226@2x.webp 2x" alt="THE INTEGRAL" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TI'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/101510794265921674226?hl=en" target="_blank" rel="noopener noreferrer">THE INTEGRAL</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Awesome. I liked the bouncy castle. Very fast delivery driver, very fast and on time. I can highly recommend them</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/110835353601951864374.webp" srcset="/images/reviewers/110835353601951864374.webp 1x, /images/reviewers/110835353601951864374@2x.webp 2x" alt="kalponik 2020" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='K2'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/110835353601951864374?hl=en" target="_blank" rel="noopener noreferrer">kalponik 2020</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">best bouncy castle experience and great service 👍🏼 i highly recommend this company..keep up the great work 👍🏼👍🏼👍🏼👍🏼👍🏼</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/100422050749502871394.webp" srcset="/images/reviewers/100422050749502871394.webp 1x, /images/reviewers/100422050749502871394@2x.webp 2x" alt="Rohit Agarwal" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RA'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/100422050749502871394?hl=en" target="_blank" rel="noopener noreferrer">Rohit Agarwal</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Friendly and hassle free service
+Would highly recommend!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/105010046694220244986.webp" srcset="/images/reviewers/105010046694220244986.webp 1x, /images/reviewers/105010046694220244986@2x.webp 2x" alt="Jeff" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='J'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/105010046694220244986?hl=en" target="_blank" rel="noopener noreferrer">Jeff</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Fantastic service an delivery was spot on. Will definitely use an an recommend for my mates with kids</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/105162987793933841757.webp" srcset="/images/reviewers/105162987793933841757.webp 1x, /images/reviewers/105162987793933841757@2x.webp 2x" alt="Steve" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='S'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/105162987793933841757?hl=en" target="_blank" rel="noopener noreferrer">Steve</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">7 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Awesome!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0mboF8AY76YycfY.webp" srcset="/images/reviewers/fb-pfbid0mboF8AY76YycfY.webp 1x, /images/reviewers/fb-pfbid0mboF8AY76YycfY@2x.webp 2x" alt="Kathryn Handy" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/kathryn.handy.3/posts/pfbid02QBRTSA8ghJ4ed23j7XcPEyHQCWyatcjFdU8DAoA8b8kfNx71iNphLBhZhwAJUj4dl" target="_blank" rel="noopener noreferrer">Kathryn Handy</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Bouncy castle hire Bexley are a fantastic company that you can depend upon. Trustworthy, great value for money and excellent customer service.  I would definitely recommend using them for your special occasions.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02gxp5omj36HsYB.webp" srcset="/images/reviewers/fb-pfbid02gxp5omj36HsYB.webp 1x, /images/reviewers/fb-pfbid02gxp5omj36HsYB@2x.webp 2x" alt="Julia Rutledge" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/julia.hall.52206/posts/pfbid02knWUuBqXgRXVroUtMMBfUdzUqNYQ7p8pARCrcsQbKLAcL1JT9tVEbc2uKBUVhR3Ml" target="_blank" rel="noopener noreferrer">Julia Rutledge</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Bouncy Castle, Superhero Air Juggler/ Ball pond and Superhero Soft Play Hire;  I’d like to give a HUGE thank you to Bexley Castle Hire for the amazing service, before booking, on delivery, efficiency and professionalism throughout. Upon hiring a venue with an incredibly low ceiling height, I was assisted with a last minute change to the castle hired, which also complimented my theme. I would not hesitate to  Highly recommend this wonderful business to all, for your celebrations requirements. Thank you you contributed to Alfie having a fab 5th Birthday Party �</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103248019661076694000.webp" srcset="/images/reviewers/103248019661076694000.webp 1x, /images/reviewers/103248019661076694000@2x.webp 2x" alt="Matthew McCoy" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='MM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103248019661076694000?hl=en" target="_blank" rel="noopener noreferrer">Matthew McCoy</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Owners were amazing to deal with keep up the great work</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02PCk1kyResPg6D.webp" srcset="/images/reviewers/fb-pfbid02PCk1kyResPg6D.webp 1x, /images/reviewers/fb-pfbid02PCk1kyResPg6D@2x.webp 2x" alt="Robert English" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='RE'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/robert.english.560/posts/pfbid0st84j2hAJFNtCUv1ckW9VU5BKtJ8TMkKUCPKK1gB71h8nLTCJn4cjvffJcTta2kMl" target="_blank" rel="noopener noreferrer">Robert English</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Kids loved it  - very professional ���</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117389309406849013407.webp" srcset="/images/reviewers/117389309406849013407.webp 1x, /images/reviewers/117389309406849013407@2x.webp 2x" alt="Kenneth Dowding" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='KD'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117389309406849013407?hl=en" target="_blank" rel="noopener noreferrer">Kenneth Dowding</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Very helpful and friendly business, great website!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/107696171395666476621.webp" srcset="/images/reviewers/107696171395666476621.webp 1x, /images/reviewers/107696171395666476621@2x.webp 2x" alt="Joe" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='J'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/107696171395666476621?hl=en" target="_blank" rel="noopener noreferrer">Joe</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Everything went perfectly! On time and the guy setting up was friendly. Would highly recommend!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106531376697226222859.webp" srcset="/images/reviewers/106531376697226222859.webp 1x, /images/reviewers/106531376697226222859@2x.webp 2x" alt="John Purvis" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JP'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106531376697226222859?hl=en" target="_blank" rel="noopener noreferrer">John Purvis</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Fantastic family ran business. Spencer will always go above and beyond and nothing is ever too much hassle.
+Thanks again</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117387429029441383745.webp" srcset="/images/reviewers/117387429029441383745.webp 1x, /images/reviewers/117387429029441383745@2x.webp 2x" alt="dan norris" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DN'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117387429029441383745?hl=en" target="_blank" rel="noopener noreferrer">dan norris</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Thank you For A Amazing Hire Last Weekend Was Such Amazing Service .Would Definitely Recommend To Anyone That Is Planning A Birthday Party .Top Quality Service</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/117406615785105024154.webp" srcset="/images/reviewers/117406615785105024154.webp 1x, /images/reviewers/117406615785105024154@2x.webp 2x" alt="Jack Mclellan" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JM'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/117406615785105024154?hl=en" target="_blank" rel="noopener noreferrer">Jack Mclellan</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">i got a bouncey castle for my son birthday party and I got to say how clean the castles are and  they are very cheap I will definitely be using these guys again</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/109028090175583021432.webp" srcset="/images/reviewers/109028090175583021432.webp 1x, /images/reviewers/109028090175583021432@2x.webp 2x" alt="RG" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='R'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/109028090175583021432?hl=en" target="_blank" rel="noopener noreferrer">RG</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Top notch service! Will hire again next year.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid02MvUmTACuaa8Xa.webp" srcset="/images/reviewers/fb-pfbid02MvUmTACuaa8Xa.webp 1x, /images/reviewers/fb-pfbid02MvUmTACuaa8Xa@2x.webp 2x" alt="Danny Robinson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DR'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/dannyrobinson76/posts/pfbid0otGb2mPdNPufgzBq5MaDMTeVNxnsGD5xfxNfdTbgXF3rx9jXYLFEqxkDF6aoVi5el" target="_blank" rel="noopener noreferrer">Danny Robinson</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excellent service. Kids loved it, really made their day. 
+Friendly helpful staff. Cannot recommend enough. Thanks for everything!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0364VYfu4PQB5yL.webp" srcset="/images/reviewers/fb-pfbid0364VYfu4PQB5yL.webp 1x, /images/reviewers/fb-pfbid0364VYfu4PQB5yL@2x.webp 2x" alt="Christian Cordova" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='CC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/christian.cordova.5036/posts/pfbid0CFaUGiRgk3T8RSLS4gUdsuG9ZkFB6bosxRB5huqMFEn2XAV33UGx1qVsEPMVDpe1l" target="_blank" rel="noopener noreferrer">Christian Cordova</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">5* service . They have great bouncy castles . My boys had so much fun.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/104898490628960327728.webp" srcset="/images/reviewers/104898490628960327728.webp 1x, /images/reviewers/104898490628960327728@2x.webp 2x" alt="badBLKman" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='B'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/104898490628960327728?hl=en" target="_blank" rel="noopener noreferrer">badBLKman</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Great place, great staff! Your kids will have a blast.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0GSgNPrU1J1Pykn.webp" srcset="/images/reviewers/fb-pfbid0GSgNPrU1J1Pykn.webp 1x, /images/reviewers/fb-pfbid0GSgNPrU1J1Pykn@2x.webp 2x" alt="Nicola Cihanyandi" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='NC'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/nicola.harding.18/posts/pfbid0kh3oo3Mrrf25pPLxqcSxS2THpkfYmDt4XrS1BTD6EDmjWWWhJJvEwzL96ZGv1p68l" target="_blank" rel="noopener noreferrer">Nicola Cihanyandi</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Would highly recommend this company to everyone for your bouncy castle hire. Staff were professional, helpful and friendly. Castle  was very clean and great quality. Brilliant service...thank you!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/106047080316111457749.webp" srcset="/images/reviewers/106047080316111457749.webp 1x, /images/reviewers/106047080316111457749@2x.webp 2x" alt="Gary Smith" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='GS'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/106047080316111457749?hl=en" target="_blank" rel="noopener noreferrer">Gary Smith</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Fantastic little find!!
+
+From the moment we booked, really friendly and easy company to deal with.  High spec modern equipment which was extremely clean.  Very reliable with timings and wouldn't hesitate to book again.  Have already recommended to family and friends.  Thanks for making it a great occasion.  See you soon!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/114876761985047264764.webp" srcset="/images/reviewers/114876761985047264764.webp 1x, /images/reviewers/114876761985047264764@2x.webp 2x" alt="James Hirst" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/114876761985047264764?hl=en" target="_blank" rel="noopener noreferrer">James Hirst</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Totally reliable and really (really!) reasonable! Great service from the first call! Thanks guys!!!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/fb-pfbid0346uzZ88mu3Q2R.webp" srcset="/images/reviewers/fb-pfbid0346uzZ88mu3Q2R.webp 1x, /images/reviewers/fb-pfbid0346uzZ88mu3Q2R@2x.webp 2x" alt="Danielle Henson" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='DH'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.facebook.com/danielle.henson.946/posts/pfbid07r2UWUM4MpfvJGsoG9K8SnJg8v4mHzLxUVCLdy8AmHqxCHdFbeHEVGzimTtcJtRQl" target="_blank" rel="noopener noreferrer">Danielle Henson</a></div>
+            <div class="review-meta">
+              <span class="recommended-badge">👍 Recommends</span>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">This company gives fantastic service. Great choice of clean castles in excellent condition. Highly recommended.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/103358440708560530894.webp" srcset="/images/reviewers/103358440708560530894.webp 1x, /images/reviewers/103358440708560530894@2x.webp 2x" alt="Javier Garzón" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JG'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/103358440708560530894?hl=en" target="_blank" rel="noopener noreferrer">Javier Garzón</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Excelent service and great work from the staff.</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/116065364743024184896.webp" srcset="/images/reviewers/116065364743024184896.webp 1x, /images/reviewers/116065364743024184896@2x.webp 2x" alt="TeeJay Velasquez" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='TV'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/116065364743024184896?hl=en" target="_blank" rel="noopener noreferrer">TeeJay Velasquez</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">Very prompt and very communicative!  Will definitely recommend!</div>
+      </div>
+    
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar"><img src="/images/reviewers/111207086587276333407.webp" srcset="/images/reviewers/111207086587276333407.webp 1x, /images/reviewers/111207086587276333407@2x.webp 2x" alt="Johnathan Wan" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='JW'"></div>
+          <div class="review-info">
+            <div class="review-author"><a href="https://www.google.com/maps/contrib/111207086587276333407?hl=en" target="_blank" rel="noopener noreferrer">Johnathan Wan</a></div>
+            <div class="review-meta">
+              <div class="star-rating"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span></div>
+              <span class="review-date">8 years ago</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-content">My first experience with this company was amazing! As a visitor from Asia, this is really an eye opener! The service was top-notch, the castles were clean (especially important for infants!) & most importantly, the staff knew how to have fun! Definitely a 6 star if I could give it!
+Will engage them again when I revisit this country again :)</div>
+      </div>
+    </div>
+  </div>
+  </div>
     <script>
-      // Store iframe-resizer script to execute after masonry
-      window.__iframeResizerInit = function() {
-        /*!
+      /*!
  *  @preserve
  *  
  *  @module      iframe-resizer/child 5.5.7 (umd) - 2025-09-23
@@ -2107,87 +3961,6 @@ window.iframeResizer = {
 `,a),ne()}),r}(e),K=X.size>0,typeof Set.prototype.symmetricDifference==="function"&&(Wt=X.symmetricDifference(nn).size>0),nn=X}function ko(){switch(on(),!0){case!Wt:return;case X.size>1:f("Overflowed Elements:",X);break;case K:break;default:f("No overflow detected")}L("overflowObserver","Overflow updated")}function jo(e){let n={root:document.documentElement,side:D?"bottom":"right"};return T=eo(ko,n),T.attachObservers(e),T}function To(e){if(!Array.isArray(e)||e.length===0)return;let n=e[0].target;L("resizeObserver",`Element resized <${function(r){switch(!0){case!te(r):return"";case te(r.id):return`${r.nodeName}#${r.id}`;case te(r.name):return`${r.nodeName} (${r.name}`;case te(r.className):return`${r.nodeName}.${r.className}`;default:return r.nodeName}}(n)}>`)}function xo(e){return ue=new ResizeObserver(To),ue.observe(document.body),Me.add(document.body),f("Attached ResizeObserver to body"),v={attachObserverToNonStaticElements:so,detachObservers:Lt(de,ue,Me,ro),disconnect:()=>{ue.disconnect(),f("Detached ResizeObserver")}},v.attachObserverToNonStaticElements(e),v}function Ao(e){Vt=!e,L("visibilityObserver","Visibility changed")}let rn=(e)=>{let n=new Set;for(let r of e){n.add(r);for(let a of bt(r))n.add(a)}return f(`Inspecting:
 `,n),n},No=(e)=>{if(e.size===0)return;S("addObservers");let n=rn(e);T.attachObservers(n),v.attachObserverToNonStaticElements(n),ne()},Ro=(e)=>{if(e.size===0)return;S("removeObservers");let n=rn(e);T.detachObservers(n),v.detachObservers(n),ne()};function Co(e){(function({addedNodes:n,removedNodes:r}){S("contentMutated"),Yt(),Jt(),on(),ne(),Ro(r),No(n)})(e),L("mutationObserver","Mutation Observed")}function Io(){let e=bt(document.documentElement);var n;n=[Jn(Co),jo(e),no(),xo(e),co(Ao)],u.push(...n.map((r)=>r.disconnect))}function Ce(e){performance.mark(Ke);let n=Tt(e),r=1,a=document.documentElement,c=fe?0:document.documentElement.getBoundingClientRect().bottom,l=fe?ft:K?Array.from(X):bt(document.documentElement);for(let g of l)r=g.getBoundingClientRect()[e]+parseFloat(getComputedStyle(g).getPropertyValue(`margin-${e}`)),r>c&&(c=r,a=g);return f(`${n} position calculated from:`,a),f(`Checked %c${l.length}%c elements`,N,De),performance.mark(Oe,{detail:{hasTags:fe,len:l.length,logging:xe,Side:n}}),c}let Ie=(e)=>[e.bodyOffset(),e.bodyScroll(),e.documentElementOffset(),e.documentElementScroll(),e.boundingClientRect()],Po=`* ${Array.from(Ot).map((e)=>`:not(${e})`).join("")}`,bt=(e)=>e.querySelectorAll(Po),Pe={height:0,width:0},ie={height:0,width:0},J=[N,De,N];function an(e){function n(){return ie[a]=c,Pe[a]=w,Math.max(c,1)}let r=e===P,a=e.label,c=e.boundingClientRect(),l=Math.ceil(c),g=Math.floor(c),w=((q)=>q.documentElementScroll()+Math.max(0,q.getOffset()))(e),j=`HTML: %c${c}px %cPage: %c${w}px`,p=1;switch(!0){case!e.enabled():return Math.max(w,1);case fe:f("Found element with data-iframe-size attribute"),p=e.taggedElement();break;case(!K&&Te&&ie[a]===0&&Pe[a]===0):f(`Initial page size values: ${j}`,...J),p=n();break;case(Ae&&c===ie[a]&&w===Pe[a]):f(`Size unchanged: ${j}`,...J),p=Math.max(c,w);break;case(c===0&&w!==0):f(`Page is hidden: ${j}`,...J),p=w;break;case(!K&&c!==ie[a]&&w<=Pe[a]):f(`New <html> size: ${j} `,...J),f(`Previous <html> size: %c${ie[a]}px`,N),p=n();break;case!r:p=e.taggedElement();break;case(!K&&c<ie[a]):f(`<html> size decreased: ${j}`,...J),p=n();break;case(w===g||w===l):f(`<html> size equals page size: ${j}`,...J),p=n();break;case c>w:f(`Page size < <html> size: ${j}`,...J),p=n();break;case K:f("Found elements possibly overflowing <html> "),p=e.taggedElement();break;default:f(`Using <html> size: ${j}`,...J),p=n()}return f(`Content ${a}: %c${p}px`,N),p+=function(q){let ae=q.getOffset();return ae!==0&&f(`Page offsetSize: %c${ae}px`,N),ae}(e),Math.max(p,1)}let P={label:"height",enabled:()=>D,getOffset:()=>Z,auto:()=>an(P),bodyOffset:()=>{let{body:e}=document,n=getComputedStyle(e);return e.offsetHeight+parseInt(n.marginTop,10)+parseInt(n.marginBottom,10)},bodyScroll:()=>document.body.scrollHeight,offset:()=>P.bodyOffset(),custom:()=>t.height(),documentElementOffset:()=>document.documentElement.offsetHeight,documentElementScroll:()=>document.documentElement.scrollHeight,boundingClientRect:()=>Math.max(document.documentElement.getBoundingClientRect().bottom,document.body.getBoundingClientRect().bottom),max:()=>Math.max(...Ie(P)),min:()=>Math.min(...Ie(P)),grow:()=>P.max(),lowestElement:()=>Ce("bottom"),taggedElement:()=>Ce("bottom")},F={label:"width",enabled:()=>U,getOffset:()=>G,auto:()=>an(F),bodyScroll:()=>document.body.scrollWidth,bodyOffset:()=>document.body.offsetWidth,custom:()=>t.width(),documentElementScroll:()=>document.documentElement.scrollWidth,documentElementOffset:()=>document.documentElement.offsetWidth,boundingClientRect:()=>Math.max(document.documentElement.getBoundingClientRect().right,document.body.getBoundingClientRect().right),max:()=>Math.max(...Ie(F)),min:()=>Math.min(...Ie(F)),rightMostElement:()=>Ce("right"),scroll:()=>Math.max(F.bodyScroll(),F.documentElementScroll()),taggedElement:()=>Ce("right")},sn=(e,n)=>!(Math.abs(e-n)<=mt);function cn(e,n){let r=e[n](),a=e.enabled()&&x!==void 0?function(c){let l=x(c);if(l===void 0)throw TypeError("No value returned from onBeforeResize(), expected a numeric value");if(Number.isNaN(l))throw TypeError(`Invalid value returned from onBeforeResize(): ${l}, expected Number`);if(l<1)throw RangeError(`Out of range value returned from onBeforeResize(): ${l}, must be at least 1`);return l}(r):r;return jn(a>=1,`New iframe ${e.label} is too small: ${a}, must be at least 1`),a}let Le=!1,Lo=jt(()=>O(ee(4))),ln,zt=!1,L=Ve((e,n,r,a,c)=>{switch(S(e),!0){case Vt===!0:if(zt===!0)break;zt=!0,Le=!1,cancelAnimationFrame(ln);break;case(Le===!0&&e!=="overflowObserver"):we();break;case(!s&&!(e in Sn)):f("Resizing disabled");break;default:zt=!1,Le=!0,performance.now(),ln=requestAnimationFrame(()=>{Le=!1,S("requestAnimationFrame")}),function(l,g,w,j,p){let q=w??cn(P,k),ae=j??cn(F,C);switch(D&&sn(me,q)||U&&sn(ge,ae)?St:l){case"init":case"autoResizeEnabled":case St:me=q,ge=ae;case"setOffsetSize":un(me,ge,l,p);break;case"overflowObserver":case"mutationObserver":case"resizeObserver":case"visibilityObserver":we();break;default:we(),f("No change in content size detected")}}(e,0,r,a,c)}ne()});function dn(e){me=P[k](),ge=F[C](),$(me,ge,e)}function un(e,n,r,a,c){z<-1||(c!==void 0||(c=he),function(){let l=`${pe}:${e}:${n}:${r}${a===void 0?"":`:${a}`}`;if(dt)try{window.parent.iframeParentListener("[iFrameSizer]"+l)}catch(g){if(z!==1)throw g;return void Lo()}else Zt.postMessage("[iFrameSizer]"+l,c);f(`Sending message to parent page via ${dt?"sameOrigin":"postMessage"}: %c%c${l}`,"font-style: italic;",N)}())}let $=Ve((e,n,r,a,c)=>{S(r),un(e,n,r,a,c),ne()}),fn=Ve(function(e){S("onMessage");let{freeze:n}=Object,{parse:r}=JSON,a=(p)=>$(0,0,`${p}Stop`),c={init:function(){if(document.readyState==="loading")return;let p=e.data.slice(13).split(":");Zt=e.source,M=e.origin,lo(p),Te=!1,setTimeout(()=>{Ht=!1},128)},reset(){Ht||dn("resetPage")},resize(){L("parentResize","Parent window requested size check")},moveToAnchor(){re.findTarget(g())},inPageLink(){this.moveToAnchor()},pageInfo(){let p=g();Ne?ve(Ne,r(p)):a("pageInfo")},parentInfo(){let p=(q=g(),n(r(q)));var q;Re?ve(Re,p):a("parentInfo")},message(){let p=g();ve(ht,r(p))}},l=()=>e.data.split("]")[1].split(":")[0],g=()=>e.data.slice(e.data.indexOf(":")+1),w=()=>(e.data.split(":")[2]in{true:1,false:1});function j(){let p=l();S(p),p in c?c[p]():("iframeResize"in window)||window.jQuery!==void 0&&(""in window.jQuery.prototype)||w()||H(`Unexpected message (${e.data})`)}`${e.data}`.slice(0,13)==="[iFrameSizer]"&&function(){if(Te!==!1)return w()?(Tn(l()),S("init"),void c.init()):void 0;j()}()}),mn=!1,pn=(e)=>e.postMessage("[iFrameResizerChild]Ready",window?.iframeResizer?.targetOrigin||"*");function hn(){if(document.readyState==="loading"||!Te||mn)return;let{parent:e,top:n}=window;S("ready"),pn(e),e!==n&&pn(n),mn=!0}"iframeChildListener"in window?H("Already setup"):(window.iframeChildListener=(e)=>setTimeout(()=>fn({data:e,sameOrigin:!0})),W(window,"message",fn),W(document,"readystatechange",hn),hn())}()});
 
-      };
-    </script>
-    <script>
-      // Initialize BalancedMasonryGrid only if viewport width > 600px
-      // Then initialize iframe-resizer AFTER masonry completes
-      (function () {
-        var grid = null;
-        var container = null;
-        var iframeResizerInitialized = false;
-
-        function initIframeResizer() {
-          if (!iframeResizerInitialized && window.__iframeResizerInit) {
-            iframeResizerInitialized = true;
-            window.__iframeResizerInit();
-          }
-        }
-
-        function measureAndSetAspectRatios() {
-          var cards = document.querySelectorAll(".review-card");
-          cards.forEach(function (card) {
-            var width = card.offsetWidth || 450;
-            var height = card.scrollHeight || card.offsetHeight;
-            card.style.setProperty("--width", width);
-            card.style.setProperty("--height", height);
-          });
-        }
-
-        function initMasonry() {
-          container = document.querySelector(".reviews-container");
-          if (!container) {
-            // No container, just init iframe-resizer
-            initIframeResizer();
-            return;
-          }
-
-          if (window.innerWidth > 600) {
-            if (!grid) {
-              // Add masonry classes
-              container.classList.add("masonry-grid", "masonry-hidden");
-
-              // Measure cards and set aspect ratios
-              measureAndSetAspectRatios();
-
-              // Initialize BalancedMasonryGrid
-              grid = new BalancedMasonryGrid(container);
-
-              // Show the grid after initialization
-              container.classList.remove("masonry-hidden");
-            }
-          } else {
-            if (grid) {
-              grid.destroy();
-              grid = null;
-              container.classList.remove("masonry-grid", "masonry-hidden");
-              // Reset aspect-ratio on mobile
-              var cards = document.querySelectorAll(".review-card");
-              cards.forEach(function (card) {
-                card.style.removeProperty("--width");
-                card.style.removeProperty("--height");
-              });
-            }
-          }
-
-          // Initialize iframe-resizer AFTER masonry is done
-          initIframeResizer();
-        }
-
-        // Initialize on load
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", initMasonry);
-        } else {
-          initMasonry();
-        }
-
-        // Re-initialize on resize (debounced)
-        var resizeTimeout;
-        window.addEventListener("resize", function () {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(initMasonry, 150);
-        });
-      })();
     </script>
   </body>
 </html>

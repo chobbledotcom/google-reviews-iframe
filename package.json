@@ -23,7 +23,6 @@
   "dependencies": {
     "@iframe-resizer/child": "^5.5.7",
     "@iframe-resizer/parent": "^5.5.7",
-    "@masonry-grid/vanilla": "^1.1.0",
     "sharp": "^0.33.2"
   },
   "devDependencies": {

@@ -96,28 +96,28 @@ function renderRating(review, source) {
   return renderStars(review.rating);
 }
 
-function generateReviewsHtml(reviews, source = "google") {
-  if (!reviews || reviews.length === 0) {
-    return '<div class="no-reviews">No reviews available.</div>';
+function countWords(text) {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function renderReviewCard(review, source) {
+  const initials = getInitials(review.author);
+  const authorLink = review.authorUrl
+    ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
+    : review.author;
+
+  // Use thumbnail image if available, otherwise fall back to initials
+  let avatarContent = initials;
+  if (review.thumbnail) {
+    const thumb2x = review.thumbnail.replace(".webp", "@2x.webp");
+    avatarContent = `<img src="${review.thumbnail}" srcset="${review.thumbnail} 1x, ${thumb2x} 2x" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`;
   }
 
-  const renderReview = (review) => {
-    const initials = getInitials(review.author);
-    const authorLink = review.authorUrl
-      ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
-      : review.author;
+  // Determine source from review data or passed parameter
+  const reviewSource = review.source || source;
 
-    // Use thumbnail image if available, otherwise fall back to initials
-    let avatarContent = initials;
-    if (review.thumbnail) {
-      const thumb2x = review.thumbnail.replace(".webp", "@2x.webp");
-      avatarContent = `<img src="${review.thumbnail}" srcset="${review.thumbnail} 1x, ${thumb2x} 2x" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`;
-    }
-
-    // Determine source from review data or passed parameter
-    const reviewSource = review.source || source;
-
-    return `
+  return `
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar">${avatarContent}</div>
@@ -132,9 +132,57 @@ function generateReviewsHtml(reviews, source = "google") {
         <div class="review-content">${review.content || ""}</div>
       </div>
     `;
-  };
+}
 
-  return map(renderReview)(reviews).join("");
+// Determine which column to add a review to based on word count balance
+function shouldAddToLeft(leftWordCount, rightWordCount, index) {
+  // If right column is 20+ words longer, add to left
+  if (rightWordCount - leftWordCount >= 20) return true;
+  // If left column is 20+ words longer, add to right
+  if (leftWordCount - rightWordCount >= 20) return false;
+  // Otherwise alternate starting with left
+  return index % 2 === 0;
+}
+
+function generateReviewsHtml(reviews, source = "google") {
+  if (!reviews || reviews.length === 0) {
+    return '<div class="no-reviews">No reviews available.</div>';
+  }
+
+  // Generate mobile layout (single column, all reviews in order)
+  const mobileHtml = reviews
+    .map((review) => renderReviewCard(review, source))
+    .join("");
+
+  // Generate desktop layout (two columns, balanced by word count)
+  const leftColumn = [];
+  const rightColumn = [];
+  let leftWordCount = 0;
+  let rightWordCount = 0;
+
+  for (let i = 0; i < reviews.length; i++) {
+    const review = reviews[i];
+    const reviewWords = countWords(review.content);
+    const reviewHtml = renderReviewCard(review, source);
+
+    if (shouldAddToLeft(leftWordCount, rightWordCount, i)) {
+      leftColumn.push(reviewHtml);
+      leftWordCount += reviewWords;
+    } else {
+      rightColumn.push(reviewHtml);
+      rightWordCount += reviewWords;
+    }
+  }
+
+  const desktopHtml = `
+    <div class="reviews-column reviews-column-left">${leftColumn.join("")}</div>
+    <div class="reviews-column reviews-column-right">${rightColumn.join("")}</div>
+  `;
+
+  return `
+    <div class="mobile-reviews">${mobileHtml}</div>
+    <div class="desktop-reviews">${desktopHtml}</div>
+  `;
 }
 
 function generateHtml(reviews, _businessSlug, source = "google") {
@@ -144,10 +192,6 @@ function generateHtml(reviews, _businessSlug, source = "google") {
 
   // Read HTML template
   let template = fs.readFileSync(TEMPLATE_PATH, "utf8");
-
-  // Read bundled masonry script from dist/
-  const masonryScriptPath = path.join(rootDir, "dist", "masonry.js");
-  const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
 
   // Read bundled iframe resizer child script from dist/
   const childScriptPath = path.join(rootDir, "dist", "iframe-resizer-child.js");
@@ -184,7 +228,6 @@ function generateHtml(reviews, _businessSlug, source = "google") {
 
   // Replace placeholders
   let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
-  html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
   html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
   return html;

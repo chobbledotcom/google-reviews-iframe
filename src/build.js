@@ -2,7 +2,7 @@
 
 /**
  * Build script using Bun's bundler to create:
- * - dist/reviews-embed.js (parent embed with iframe-resizer)
+ * - dist/reviews-embed.js (parent embed script with iframe-resizer)
  * - dist/iframe-resizer-child.js (child script for iframes)
  */
 
@@ -46,20 +46,5 @@ if (!childResult.success) {
   process.exit(1);
 }
 console.log("Built dist/iframe-resizer-child.js");
-
-// Build masonry script for iframes
-const masonryResult = await Bun.build({
-  entrypoints: [path.join(__dirname, "embed/masonry.js")],
-  outdir: distDir,
-  naming: "masonry.js",
-  minify: true,
-  target: "browser",
-});
-
-if (!masonryResult.success) {
-  console.error("Masonry build failed:", masonryResult.logs);
-  process.exit(1);
-}
-console.log("Built dist/masonry.js");
 
 console.log("Build complete!");

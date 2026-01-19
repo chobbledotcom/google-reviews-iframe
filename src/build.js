@@ -47,4 +47,19 @@ if (!childResult.success) {
 }
 console.log("Built dist/iframe-resizer-child.js");
 
+// Build masonry script for iframes
+const masonryResult = await Bun.build({
+  entrypoints: [path.join(__dirname, "embed/masonry.js")],
+  outdir: distDir,
+  naming: "masonry.js",
+  minify: true,
+  target: "browser",
+});
+
+if (!masonryResult.success) {
+  console.error("Masonry build failed:", masonryResult.logs);
+  process.exit(1);
+}
+console.log("Built dist/masonry.js");
+
 console.log("Build complete!");

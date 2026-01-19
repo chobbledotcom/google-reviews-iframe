@@ -27,6 +27,17 @@
         margin: 0 auto;
       }
 
+      /* CSS Grid masonry layout for desktop */
+      .reviews-container.masonry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+        gap: 20px;
+      }
+
+      .reviews-container.masonry-hidden {
+        opacity: 0;
+      }
+
       .review-card {
         background: white;
         border-radius: 12px;
@@ -37,15 +48,31 @@
         margin-bottom: 20px;
       }
 
+      /* Masonry grid card styling */
+      .masonry-grid .review-card {
+        width: auto;
+        margin-bottom: 0;
+        aspect-ratio: var(--width) / var(--height);
+      }
+
       @media (max-device-width: 600px) {
         body {
           padding: 0;
+        }
+
+        .reviews-container.masonry-grid {
+          display: block;
         }
 
         .review-card {
           padding: 10px;
           width: auto;
           box-shadow: none;
+        }
+
+        .masonry-grid .review-card {
+          aspect-ratio: auto;
+          margin-bottom: 15px;
         }
       }
 
@@ -154,23 +181,50 @@
       {{IFRAME_RESIZER_SCRIPT}}
     </script>
     <script>
-      // Initialize Masonry only if viewport width > 600px
+      // Initialize BalancedMasonryGrid only if viewport width > 600px
       (function () {
-        var msnry = null;
+        var grid = null;
+        var container = null;
+
+        function measureAndSetAspectRatios() {
+          var cards = document.querySelectorAll(".review-card");
+          cards.forEach(function (card) {
+            var width = card.offsetWidth || 450;
+            var height = card.scrollHeight || card.offsetHeight;
+            card.style.setProperty("--width", width);
+            card.style.setProperty("--height", height);
+          });
+        }
 
         function initMasonry() {
+          container = document.querySelector(".reviews-container");
+          if (!container) return;
+
           if (window.innerWidth > 600) {
-            if (!msnry) {
-              msnry = new Masonry(".reviews-container", {
-                columnWidth: 450,
-                itemSelector: ".review-card",
-                gutter: 20,
-              });
+            if (!grid) {
+              // Add masonry classes
+              container.classList.add("masonry-grid", "masonry-hidden");
+
+              // Measure cards and set aspect ratios
+              measureAndSetAspectRatios();
+
+              // Initialize BalancedMasonryGrid
+              grid = new BalancedMasonryGrid(container);
+
+              // Show the grid after initialization
+              container.classList.remove("masonry-hidden");
             }
           } else {
-            if (msnry) {
-              msnry.destroy();
-              msnry = null;
+            if (grid) {
+              grid.destroy();
+              grid = null;
+              container.classList.remove("masonry-grid", "masonry-hidden");
+              // Reset aspect-ratio on mobile
+              var cards = document.querySelectorAll(".review-card");
+              cards.forEach(function (card) {
+                card.style.removeProperty("--width");
+                card.style.removeProperty("--height");
+              });
             }
           }
         }
@@ -182,8 +236,12 @@
           initMasonry();
         }
 
-        // Re-initialize on resize
-        window.addEventListener("resize", initMasonry);
+        // Re-initialize on resize (debounced)
+        var resizeTimeout;
+        window.addEventListener("resize", function () {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(initMasonry, 150);
+        });
       })();
     </script>
   </head>

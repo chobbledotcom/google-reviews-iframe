@@ -14,6 +14,5 @@ coverageThreshold = { lines = 1.0, functions = 1.0 }
 # Exclude third-party vendored files and submodule from coverage
 coveragePathIgnorePatterns = [
   "lib/chobble-template/**",
-  "masonry.pkgd.min.js",
   "iframe-resizer.child.js",
 ]

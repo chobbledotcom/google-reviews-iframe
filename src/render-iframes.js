@@ -145,8 +145,8 @@ function generateHtml(reviews, _businessSlug, source = "google") {
   // Read HTML template
   let template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  // Read Masonry script from root
-  const masonryScriptPath = path.join(rootDir, "masonry.pkgd.min.js");
+  // Read bundled masonry script from dist/
+  const masonryScriptPath = path.join(rootDir, "dist", "masonry.js");
   const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
 
   // Read bundled iframe resizer child script from dist/

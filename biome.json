@@ -9,7 +9,8 @@
       "!lib",
       "!node_modules",
       "!dist",
-      "!masonry.pkgd.min.js"
+      "!masonry.pkgd.min.js",
+      "!test"
     ]
   },
   "linter": {

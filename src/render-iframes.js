@@ -157,7 +157,7 @@ function generateReviewsHtml(reviews) {
 
   for (let i = 0; i < reviews.length; i++) {
     const review = reviews[i];
-    const reviewWords = countWords(review.content);
+    const reviewWords = Math.max(0, countWords(review.content) - 25);
     const reviewHtml = renderReviewCard(review);
 
     if (shouldAddToLeft(leftWordCount, rightWordCount, i)) {

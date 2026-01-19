@@ -16,7 +16,8 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched_google": "2026-01-16 10:34:42",
-    "last_fetched_facebook": "2026-01-19 01:42:01"
+    "last_fetched_facebook": "2026-01-19 01:42:01",
+    "last_fetched_test-success": "2026-01-19 09:26:40"
   },
   {
     "source": "google",
@@ -38,6 +39,7 @@
     "fetch_frequency_days": 7,
     "last_fetched_google": "2026-01-19 00:52:52",
     "last_fetched_facebook": "2026-01-19 01:17:39",
-    "last_fetched_trustpilot": "2026-01-19 06:45:39"
+    "last_fetched_trustpilot": "2026-01-19 06:45:39",
+    "last_fetched_test-success": "2026-01-19 09:26:40"
   }
 ]

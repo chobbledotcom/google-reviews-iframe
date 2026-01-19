@@ -6,13 +6,33 @@ import fs from "node:fs";
 import path from "node:path";
 import { withTempDirAsync } from "#toolkit/test-utils/index.js";
 import {
+  buildReviewData,
   extractGoogleUserId,
   filterByPlatform,
   filterBySlug,
   formatFilename,
+  formatRating,
   getLatestReviewDate,
+  isDnsError,
+  isRedirect,
+  parseUrlSafe,
   shouldFetch,
+  updateLastFetched,
 } from "../src/lib/shared.js";
+
+// Test helper: create a date offset by days from today
+const daysAgo = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+};
+
+// Test helper: create business with last_fetched timestamp
+const createBusinessWithFetch = (lastFetched, frequency = 7, extra = {}) => ({
+  last_fetched: lastFetched.toISOString(),
+  fetch_frequency_days: frequency,
+  ...extra,
+});
 
 describe("extractGoogleUserId", () => {
   it("extracts user ID from standard contributor URL", () => {
@@ -140,52 +160,27 @@ describe("shouldFetch", () => {
   });
 
   it("returns false when fetched recently (within frequency)", () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const business = {
-      last_fetched: yesterday.toISOString(),
-      fetch_frequency_days: 7,
-    };
+    const business = createBusinessWithFetch(daysAgo(1));
     expect(shouldFetch(business)).toBe(false);
   });
 
   it("returns true when fetch frequency exceeded", () => {
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-    const business = {
-      last_fetched: twoWeeksAgo.toISOString(),
-      fetch_frequency_days: 7,
-    };
+    const business = createBusinessWithFetch(daysAgo(14));
     expect(shouldFetch(business)).toBe(true);
   });
 
   it("supports source-specific timestamps", () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
     const business = {
-      last_fetched_google: yesterday.toISOString(),
-      last_fetched_facebook: twoWeeksAgo.toISOString(),
+      last_fetched_google: daysAgo(1).toISOString(),
+      last_fetched_facebook: daysAgo(14).toISOString(),
       fetch_frequency_days: 7,
     };
-
     expect(shouldFetch(business, "google")).toBe(false);
     expect(shouldFetch(business, "facebook")).toBe(true);
   });
 
   it("falls back to generic last_fetched if source-specific not found", () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const business = {
-      last_fetched: yesterday.toISOString(),
-      fetch_frequency_days: 7,
-    };
+    const business = createBusinessWithFetch(daysAgo(1));
     expect(shouldFetch(business, "google")).toBe(false);
   });
 });
@@ -245,5 +240,165 @@ describe("getLatestReviewDate", () => {
       const result = getLatestReviewDate(dir);
       expect(result).toBe("2024-01-02");
     });
+  });
+});
+
+describe("formatRating", () => {
+  it("formats Google ratings as stars", () => {
+    expect(formatRating(5, "google")).toBe("5/5 stars");
+    expect(formatRating(3, "google")).toBe("3/5 stars");
+    expect(formatRating(1, "google")).toBe("1/5 stars");
+  });
+
+  it("formats Facebook 5 stars as recommended", () => {
+    expect(formatRating(5, "facebook")).toBe("recommended");
+  });
+
+  it("formats Facebook non-5 stars as not recommended", () => {
+    expect(formatRating(1, "facebook")).toBe("not recommended");
+    expect(formatRating(4, "facebook")).toBe("not recommended");
+  });
+
+  it("formats Trustpilot ratings as stars", () => {
+    expect(formatRating(4, "trustpilot")).toBe("4/5 stars");
+  });
+});
+
+describe("buildReviewData", () => {
+  it("builds review data object from review and metadata", () => {
+    const review = {
+      author: "John Doe",
+      authorUrl: "https://example.com/user/123",
+      rating: 5,
+      content: "Great service!",
+      date: new Date("2024-06-15T10:00:00.000Z"),
+      userId: "123456",
+    };
+
+    const result = buildReviewData(review, "/images/thumb.webp", "google");
+
+    expect(result).toEqual({
+      author: "John Doe",
+      authorUrl: "https://example.com/user/123",
+      rating: 5,
+      content: "Great service!",
+      date: "2024-06-15T10:00:00.000Z",
+      userId: "123456",
+      thumbnail: "/images/thumb.webp",
+      source: "google",
+    });
+  });
+
+  it("handles null userId", () => {
+    const review = {
+      author: "Anonymous",
+      authorUrl: "",
+      rating: 4,
+      content: "Good",
+      date: new Date("2024-01-01T00:00:00.000Z"),
+      userId: null,
+    };
+
+    const result = buildReviewData(review, null, "facebook");
+
+    expect(result.userId).toBe(null);
+    expect(result.thumbnail).toBe(null);
+    expect(result.source).toBe("facebook");
+  });
+});
+
+describe("parseUrlSafe", () => {
+  it("parses valid URLs", () => {
+    const result = parseUrlSafe("https://example.com/path?query=1");
+    expect(result).toBeInstanceOf(URL);
+    expect(result.hostname).toBe("example.com");
+  });
+
+  it("returns null for invalid URLs", () => {
+    expect(parseUrlSafe("not-a-url")).toBe(null);
+    expect(parseUrlSafe("")).toBe(null);
+    expect(parseUrlSafe("://missing-protocol")).toBe(null);
+  });
+});
+
+describe("isRedirect", () => {
+  it("returns truthy for redirect responses with location header", () => {
+    expect(
+      isRedirect({ statusCode: 301, headers: { location: "/new" } }),
+    ).toBeTruthy();
+    expect(
+      isRedirect({ statusCode: 302, headers: { location: "/other" } }),
+    ).toBeTruthy();
+    expect(
+      isRedirect({ statusCode: 307, headers: { location: "/temp" } }),
+    ).toBeTruthy();
+  });
+
+  it("returns falsy for non-redirect status codes", () => {
+    expect(
+      isRedirect({ statusCode: 200, headers: { location: "/" } }),
+    ).toBeFalsy();
+    expect(
+      isRedirect({ statusCode: 404, headers: { location: "/" } }),
+    ).toBeFalsy();
+    expect(
+      isRedirect({ statusCode: 500, headers: { location: "/" } }),
+    ).toBeFalsy();
+  });
+
+  it("returns falsy when location header is missing", () => {
+    expect(isRedirect({ statusCode: 301, headers: {} })).toBeFalsy();
+    expect(
+      isRedirect({ statusCode: 302, headers: { other: "value" } }),
+    ).toBeFalsy();
+  });
+});
+
+describe("isDnsError", () => {
+  it("returns true for EAI_AGAIN error code", () => {
+    expect(isDnsError({ code: "EAI_AGAIN" })).toBe(true);
+  });
+
+  it("returns truthy for error message containing EAI_AGAIN", () => {
+    expect(
+      isDnsError({ message: "getaddrinfo EAI_AGAIN example.com" }),
+    ).toBeTruthy();
+  });
+
+  it("returns falsy for other errors", () => {
+    expect(isDnsError({ code: "ENOTFOUND" })).toBeFalsy();
+    expect(isDnsError({ code: "ECONNREFUSED" })).toBeFalsy();
+    expect(isDnsError({ message: "Connection timeout" })).toBeFalsy();
+  });
+
+  it("handles missing message gracefully", () => {
+    expect(isDnsError({ code: "OTHER" })).toBeFalsy();
+    expect(isDnsError({})).toBeFalsy();
+  });
+});
+
+describe("updateLastFetched", () => {
+  it("updates generic last_fetched when no source specified", () => {
+    const business = { slug: "test" };
+    updateLastFetched(business);
+    expect(business.last_fetched).toBeDefined();
+    expect(business.last_fetched).toMatch(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+    );
+  });
+
+  it("updates source-specific timestamp when source is specified", () => {
+    const business = { slug: "test" };
+    updateLastFetched(business, "google");
+    expect(business.last_fetched_google).toBeDefined();
+    expect(business.last_fetched).toBeUndefined();
+  });
+
+  it("preserves other properties", () => {
+    const business = { slug: "test", name: "Test Business" };
+    updateLastFetched(business, "facebook");
+    expect(business.slug).toBe("test");
+    expect(business.name).toBe("Test Business");
+    expect(business.last_fetched_facebook).toBeDefined();
   });
 });

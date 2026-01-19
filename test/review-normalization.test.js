@@ -2,102 +2,27 @@
  * Tests for review normalization logic
  *
  * These tests verify that raw API responses are correctly normalized
- * to the internal review format. Since the normalization functions
- * are internal to each fetch module, we test them via their behavior
- * on known inputs.
+ * to the internal review format, using the actual exported functions.
  */
 import { describe, expect, it } from "bun:test";
 import { filter, flatMap, map, pipe } from "#toolkit/fp/index.js";
-import { extractGoogleUserId } from "../src/lib/shared.js";
+import {
+  extractFacebookUserId,
+  normalizeFacebookReview,
+} from "../src/fetch-facebook-reviews.js";
+import { normalizeGoogleReview } from "../src/fetch-google-reviews.js";
+import {
+  buildTrustpilotContent,
+  extractTrustpilotUserId,
+  normalizeTrustpilotReview,
+} from "../src/fetch-trustpilot-reviews.js";
+import { hasContent } from "../src/lib/shared.js";
 import {
   createFacebookReview,
   createGoogleResponse,
   createGoogleReview,
   createTrustpilotReview,
 } from "./apify-mock.js";
-
-/**
- * Re-implementations of the normalization logic for testing.
- * These mirror the actual implementations in the fetch modules,
- * allowing us to test the normalization behavior independently.
- */
-
-// Google normalization (from fetch-google-reviews.js)
-const normalizeGoogleReview = (review) => {
-  const authorUrl = review.reviewerUrl || review.authorUrl || "";
-  return {
-    content: review.text || review.reviewText || "",
-    date: review.publishedAtDate
-      ? new Date(review.publishedAtDate)
-      : new Date(),
-    rating: review.stars || review.rating || 0,
-    author: review.name || review.authorName || "Anonymous",
-    authorUrl: authorUrl,
-    photoUrl:
-      review.reviewerPhotoUrl ||
-      review.userPhotoUrl ||
-      review.reviewerAvatar ||
-      "",
-    userId: extractGoogleUserId(authorUrl),
-  };
-};
-
-// Facebook normalization (from fetch-facebook-reviews.js)
-const extractFacebookUserId = (user) => {
-  if (!user) return null;
-  if (user.id && /^\d+$/.test(user.id)) {
-    return `fb-${user.id}`;
-  }
-  if (user.id) {
-    return `fb-${user.id.substring(0, 20)}`;
-  }
-  return null;
-};
-
-const normalizeFacebookReview = (review) => {
-  const user = review.user || {};
-  const userId = extractFacebookUserId(user);
-  const rating = review.isRecommended ? 5 : 1;
-
-  return {
-    content: review.text || "",
-    date: review.date ? new Date(review.date) : new Date(),
-    rating: rating,
-    author: user.name || "Anonymous",
-    authorUrl: review.url || user.profileUrl || "",
-    photoUrl: user.profilePic || "",
-    userId: userId,
-    isRecommended: review.isRecommended,
-  };
-};
-
-// Trustpilot normalization (from fetch-trustpilot-reviews.js)
-const extractTrustpilotUserId = (review) => {
-  if (!review.reviewId) return null;
-  return `tp-${review.reviewId}`;
-};
-
-const normalizeTrustpilotReview = (review) => {
-  const userId = extractTrustpilotUserId(review);
-  const rating = Number.parseInt(review.ratingValue, 10) || 0;
-  const content = review.reviewTitle
-    ? `${review.reviewTitle}\n\n${review.reviewText || ""}`
-    : review.reviewText || "";
-
-  return {
-    content: content.trim(),
-    date: review.date ? new Date(review.date) : new Date(),
-    rating: rating,
-    author: review.name || "Anonymous",
-    authorUrl: review.url || "",
-    photoUrl: review.avatar || "",
-    userId: userId,
-    reviewTitle: review.reviewTitle || null,
-  };
-};
-
-// Content filter
-const hasContent = (review) => review.content && review.content.length > 5;
 
 describe("Google Review Normalization", () => {
   it("extracts content from primary 'text' field", () => {
@@ -266,6 +191,13 @@ describe("Facebook Review Normalization", () => {
     const normalized = normalizeFacebookReview(raw);
     expect(normalized.isRecommended).toBe(true);
   });
+
+  it("extractFacebookUserId handles various ID formats", () => {
+    expect(extractFacebookUserId({ id: "123456" })).toBe("fb-123456");
+    expect(extractFacebookUserId({ id: "pfbid0abc" })).toBe("fb-pfbid0abc");
+    expect(extractFacebookUserId(null)).toBe(null);
+    expect(extractFacebookUserId({})).toBe(null);
+  });
 });
 
 describe("Trustpilot Review Normalization", () => {
@@ -318,6 +250,18 @@ describe("Trustpilot Review Normalization", () => {
     const raw = createTrustpilotReview({ reviewTitle: "Original Title" });
     const normalized = normalizeTrustpilotReview(raw);
     expect(normalized.reviewTitle).toBe("Original Title");
+  });
+
+  it("extractTrustpilotUserId handles missing reviewId", () => {
+    expect(extractTrustpilotUserId({ reviewId: "abc" })).toBe("tp-abc");
+    expect(extractTrustpilotUserId({})).toBe(null);
+  });
+
+  it("buildTrustpilotContent handles various combinations", () => {
+    expect(buildTrustpilotContent("Title", "Text")).toBe("Title\n\nText");
+    expect(buildTrustpilotContent("Title", "")).toBe("Title");
+    expect(buildTrustpilotContent(null, "Text")).toBe("Text");
+    expect(buildTrustpilotContent("", "Text")).toBe("Text");
   });
 });
 

@@ -5,7 +5,14 @@ import https from "node:https";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { filter, pipe } from "#toolkit/fp/index.js";
+import {
+  compact,
+  filter,
+  flatMap,
+  map,
+  pipe,
+  reduce,
+} from "#toolkit/fp/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, "..", "..");
@@ -58,94 +65,134 @@ async function downloadImageWithCurl(url, filepath1x, filepath2x) {
   }
 }
 
+// Get image file paths for a user
+const getImagePaths = (userId) => {
+  const dir = CONFIG.imagesDir;
+  return {
+    dir,
+    filepath1x: path.join(dir, `${userId}.webp`),
+    filepath2x: path.join(dir, `${userId}@2x.webp`),
+  };
+};
+
+// Check if both image files already exist
+const imageFilesExist = ({ filepath1x, filepath2x }) =>
+  fs.existsSync(filepath1x) && fs.existsSync(filepath2x);
+
+// Parse URL safely, returning null on error
+const parseUrlSafe = (url) => {
+  try {
+    return new URL(url);
+  } catch (_e) {
+    return null;
+  }
+};
+
+// Check if response is a redirect
+const isRedirect = (response) =>
+  response.statusCode >= 300 &&
+  response.statusCode < 400 &&
+  response.headers.location;
+
+// Check if error is a DNS error that should fallback to curl
+const isDnsError = (err) =>
+  err.code === "EAI_AGAIN" || err.message?.includes("EAI_AGAIN");
+
+// Process buffer into 1x and 2x images
+const processImageBuffer = async (buffer, paths) => {
+  await sharp(buffer)
+    .resize(48, 48, { fit: "cover" })
+    .webp({ quality: 80 })
+    .toFile(paths.filepath1x);
+  await sharp(buffer)
+    .resize(96, 96, { fit: "cover" })
+    .webp({ quality: 80 })
+    .toFile(paths.filepath2x);
+};
+
+// Collect response chunks and process as image
+const collectAndProcessImage = (response, paths, userId, resolve) => {
+  const chunks = [];
+  response.on("data", (chunk) => chunks.push(chunk));
+  response.on("end", async () => {
+    try {
+      await processImageBuffer(Buffer.concat(chunks), paths);
+      resolve(true);
+    } catch (err) {
+      console.warn(`Failed to process image for ${userId}: ${err.message}`);
+      resolve(false);
+    }
+  });
+};
+
+// Handle HTTP response for image download
+const handleImageResponse = (response, paths, userId, resolve) => {
+  if (response.statusCode !== 200) return resolve(false);
+  collectAndProcessImage(response, paths, userId, resolve);
+};
+
+// Create error handler for image request
+const createImageErrorHandler = (url, paths, resolve) => async (err) => {
+  const result = isDnsError(err)
+    ? await downloadImageWithCurl(url, paths.filepath1x, paths.filepath2x)
+    : false;
+  resolve(result);
+};
+
+// Create response handler for image request
+const createResponseHandler = (paths, userId, resolve) => (response) => {
+  if (isRedirect(response)) {
+    return downloadAndProcessImage(response.headers.location, userId).then(
+      resolve,
+    );
+  }
+  handleImageResponse(response, paths, userId, resolve);
+};
+
+// Validate inputs for image download
+const validateImageInputs = (url, userId) => url && userId;
+
+// Get protocol module for URL
+const getProtocolModule = (urlObj) =>
+  urlObj.protocol === "https:" ? https : http;
+
+// Setup request timeout
+const setupTimeout = (request, resolve, ms = 30000) => {
+  request.setTimeout(ms, () => {
+    request.destroy();
+    resolve(false);
+  });
+};
+
+// Check preconditions for image download, returns { skip: boolean, result: boolean, paths, urlObj }
+const checkImagePreconditions = (url, userId) => {
+  if (!validateImageInputs(url, userId)) return { skip: true, result: false };
+
+  const paths = getImagePaths(userId);
+  fs.mkdirSync(paths.dir, { recursive: true });
+
+  if (imageFilesExist(paths)) return { skip: true, result: true };
+
+  const urlObj = parseUrlSafe(url);
+  if (!urlObj) return { skip: true, result: false };
+
+  return { skip: false, paths, urlObj };
+};
+
 // Download image from URL, resize to avatar dimensions, and save as WebP
 function downloadAndProcessImage(url, userId) {
   return new Promise((resolve) => {
-    if (!url || !userId) {
-      resolve(false);
-      return;
-    }
+    const preconditions = checkImagePreconditions(url, userId);
+    if (preconditions.skip) return resolve(preconditions.result);
 
-    const dir = CONFIG.imagesDir;
-    fs.mkdirSync(dir, { recursive: true });
+    const { paths, urlObj } = preconditions;
+    const request = getProtocolModule(urlObj).get(
+      url,
+      createResponseHandler(paths, userId, resolve),
+    );
 
-    const filepath1x = path.join(dir, `${userId}.webp`);
-    const filepath2x = path.join(dir, `${userId}@2x.webp`);
-
-    // Skip if both files already exist
-    if (fs.existsSync(filepath1x) && fs.existsSync(filepath2x)) {
-      resolve(true);
-      return;
-    }
-
-    let urlObj;
-    try {
-      urlObj = new URL(url);
-    } catch (_e) {
-      resolve(false);
-      return;
-    }
-
-    const protocol = urlObj.protocol === "https:" ? https : http;
-
-    const request = protocol.get(url, (response) => {
-      // Handle redirects
-      if (
-        response.statusCode >= 300 &&
-        response.statusCode < 400 &&
-        response.headers.location
-      ) {
-        downloadAndProcessImage(response.headers.location, userId).then(
-          resolve,
-        );
-        return;
-      }
-
-      if (response.statusCode !== 200) {
-        resolve(false);
-        return;
-      }
-
-      const chunks = [];
-      response.on("data", (chunk) => chunks.push(chunk));
-      response.on("end", async () => {
-        try {
-          const buffer = Buffer.concat(chunks);
-
-          // Create 1x version (48x48)
-          await sharp(buffer)
-            .resize(48, 48, { fit: "cover" })
-            .webp({ quality: 80 })
-            .toFile(filepath1x);
-
-          // Create 2x version (96x96) for retina
-          await sharp(buffer)
-            .resize(96, 96, { fit: "cover" })
-            .webp({ quality: 80 })
-            .toFile(filepath2x);
-
-          resolve(true);
-        } catch (err) {
-          console.warn(`Failed to process image for ${userId}: ${err.message}`);
-          resolve(false);
-        }
-      });
-    });
-
-    request.on("error", async (err) => {
-      // Fallback to curl on DNS errors
-      if (err.code === "EAI_AGAIN" || err.message?.includes("EAI_AGAIN")) {
-        const result = await downloadImageWithCurl(url, filepath1x, filepath2x);
-        resolve(result);
-      } else {
-        resolve(false);
-      }
-    });
-
-    request.setTimeout(30000, () => {
-      request.destroy();
-      resolve(false);
-    });
+    request.on("error", createImageErrorHandler(url, paths, resolve));
+    setupTimeout(request, resolve);
   });
 }
 
@@ -162,36 +209,53 @@ function formatFilename(name, date) {
   return `${safeName}-${safeDate}.json`;
 }
 
+// Read a JSON file safely, returning null on error
+const readJsonSafe = (filepath) => {
+  try {
+    return JSON.parse(fs.readFileSync(filepath, "utf8"));
+  } catch (error) {
+    console.warn(`Error reading ${filepath}: ${error.message}`);
+    return null;
+  }
+};
+
+// Parse a date safely, returning null for invalid dates
+const parseDateSafe = (dateStr) => {
+  const date = new Date(dateStr);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+// Add days to a date (pure function)
+const addDays = (days) => (date) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
+// Format date as YYYY-MM-DD
+const formatDateYMD = (date) => date.toISOString().split("T")[0];
+
 function getLatestReviewDate(businessDir) {
-  if (!fs.existsSync(businessDir)) {
-    return null;
-  }
+  if (!fs.existsSync(businessDir)) return null;
 
-  const reviewDates = [];
   const files = fs.readdirSync(businessDir);
-  for (const file of files) {
-    if (!file.endsWith(".json")) continue;
-    try {
-      const content = fs.readFileSync(path.join(businessDir, file), "utf8");
-      const review = JSON.parse(content);
-      const date = new Date(review.date);
-      if (!Number.isNaN(date.getTime())) {
-        reviewDates.push(date);
-      }
-    } catch (error) {
-      console.warn(`Error reading ${file}: ${error.message}`);
-    }
-  }
 
-  if (reviewDates.length === 0) {
-    return null;
-  }
+  const reviewDates = pipe(
+    filter((f) => f.endsWith(".json")),
+    map((f) => readJsonSafe(path.join(businessDir, f))),
+    compact,
+    map((review) => parseDateSafe(review.date)),
+    compact,
+  )(files);
 
-  // Return latest date (most recent review)
-  const latestDate = new Date(Math.max(...reviewDates));
-  // Add one day buffer to ensure we don't miss reviews from the same day
-  latestDate.setDate(latestDate.getDate() + 1);
-  return latestDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+  if (reviewDates.length === 0) return null;
+
+  // Get latest date + 1 day buffer
+  return pipe(
+    reduce((max, d) => (d > max ? d : max), reviewDates[0]),
+    addDays(1),
+    formatDateYMD,
+  )(reviewDates);
 }
 
 function makeApiRequestHttps(url, data) {
@@ -280,46 +344,51 @@ async function fetchApiArray(url, data) {
   return results;
 }
 
+// Try to download thumbnail, returning path or null
+const tryDownloadThumbnail = async (review) => {
+  if (!review.userId || !review.photoUrl) return null;
+  const downloaded = await downloadAndProcessImage(
+    review.photoUrl,
+    review.userId,
+  );
+  return downloaded ? `/images/reviewers/${review.userId}.webp` : null;
+};
+
+// Format rating for display
+const formatRating = (rating, source) =>
+  source === "facebook"
+    ? rating === 5
+      ? "recommended"
+      : "not recommended"
+    : `${rating}/5 stars`;
+
+// Build review data object for storage
+const buildReviewData = (review, thumbnailPath, source) => ({
+  author: review.author,
+  authorUrl: review.authorUrl,
+  rating: review.rating,
+  content: review.content,
+  date: review.date.toISOString(),
+  userId: review.userId || null,
+  thumbnail: thumbnailPath,
+  source: source,
+});
+
 async function saveReview(review, outputDir, source = "google") {
   const filename = formatFilename(review.author, review.date);
   const filepath = path.join(outputDir, filename);
 
-  if (fs.existsSync(filepath)) {
-    return false; // Skip existing
-  }
+  if (fs.existsSync(filepath)) return false;
 
-  // Download and process thumbnail if available
-  let thumbnailPath = null;
-  if (review.userId && review.photoUrl) {
-    const downloaded = await downloadAndProcessImage(
-      review.photoUrl,
-      review.userId,
-    );
-    if (downloaded) {
-      thumbnailPath = `/images/reviewers/${review.userId}.webp`;
-    }
-  }
-
-  const reviewData = {
-    author: review.author,
-    authorUrl: review.authorUrl,
-    rating: review.rating,
-    content: review.content,
-    date: review.date.toISOString(),
-    userId: review.userId || null,
-    thumbnail: thumbnailPath,
-    source: source,
-  };
+  const thumbnailPath = await tryDownloadThumbnail(review);
+  const reviewData = buildReviewData(review, thumbnailPath, source);
 
   fs.writeFileSync(filepath, JSON.stringify(reviewData, null, 2));
+
   const thumbInfo = thumbnailPath ? " [with thumbnail]" : "";
-  const ratingDisplay =
-    source === "facebook"
-      ? review.rating === 5
-        ? "recommended"
-        : "not recommended"
-      : `${review.rating}/5 stars`;
-  console.log(`✓ ${filename} (${ratingDisplay})${thumbInfo}`);
+  console.log(
+    `✓ ${filename} (${formatRating(review.rating, source)})${thumbInfo}`,
+  );
   return true;
 }
 
@@ -361,14 +430,17 @@ function updateLastFetched(business, source = null) {
 }
 
 /**
+ * Shared content filter - reviews must have >5 characters
+ */
+const hasContent = (review) => review.content && review.content.length > 5;
+
+/**
  * Curried filter for businesses with a specific platform field
- * Uses the fp toolkit's filter function
  */
 const filterByPlatform = (platformField) => filter((b) => b[platformField]);
 
 /**
  * Curried filter for businesses by slug
- * Uses the fp toolkit's filter function
  */
 const filterBySlug = (targetSlug) =>
   targetSlug ? filter((b) => b.slug === targetSlug) : (x) => x;
@@ -383,93 +455,128 @@ const ensureBusinessDir = (business) => {
 };
 
 /**
+ * Build fetch options from business config
+ */
+const buildFetchOptions = (business, businessDir, getStartDate) => ({
+  maxReviews:
+    business.number_of_reviews === -1
+      ? CONFIG.maxReviews
+      : business.number_of_reviews,
+  ...(getStartDate && { reviewsStartDate: getStartDate(businessDir) }),
+});
+
+/**
+ * Filter reviews by minimum rating
+ */
+const filterByMinRating = (minRating) =>
+  filter((review) => review.rating >= minRating);
+
+/**
+ * Save reviews and return count saved
+ */
+const saveReviewsWithCount = async (reviews, businessDir, source) => {
+  let saved = 0;
+  for (const review of reviews) {
+    if (await saveReview(review, businessDir, source)) saved++;
+  }
+  return saved;
+};
+
+/**
  * Create a business processor for a specific platform
- * @param {object} options - Platform-specific configuration
  */
 const createBusinessProcessor = (options) => {
   const { source, fetchReviews, getStartDate } = options;
 
   return async (business, businessDir) => {
-    const fetchOptions = {
-      maxReviews:
-        business.number_of_reviews === -1
-          ? CONFIG.maxReviews
-          : business.number_of_reviews,
-    };
-
-    // Add start date if the platform supports it
-    if (getStartDate) {
-      fetchOptions.reviewsStartDate = getStartDate(businessDir);
-    }
-
+    const fetchOptions = buildFetchOptions(business, businessDir, getStartDate);
     const reviews = await fetchReviews(business, fetchOptions);
+    const filtered = filterByMinRating(business.minimum_star_rating)(reviews);
 
-    // Filter by minimum star rating using toolkit's filter
-    const meetsMinRating = (review) =>
-      review.rating >= business.minimum_star_rating;
-    const filteredReviews = filter(meetsMinRating)(reviews);
-
-    let saved = 0;
-    for (const review of filteredReviews) {
-      const wasSaved = await saveReview(review, businessDir, source);
-      if (wasSaved) saved++;
-    }
-
+    const saved = await saveReviewsWithCount(filtered, businessDir, source);
     updateLastFetched(business, source);
     return saved;
   };
 };
 
 /**
+ * Process businesses that need fetching
+ */
+const processBusinesses = async (
+  businesses,
+  processor,
+  ensureDir,
+  shouldProcess,
+  source,
+) => {
+  for (const business of businesses) {
+    if (!shouldProcess(business, source)) continue;
+    await processor(business, ensureDir(business));
+  }
+};
+
+/**
  * Create a main runner function for a review platform
- * Uses pipe from fp toolkit for composing filters
  */
 const createReviewFetcher = (options) => {
   const { platformField, source, envTokenName, fetchReviews, getStartDate } =
     options;
 
-  const processBusinessReviews = createBusinessProcessor({
+  const processor = createBusinessProcessor({
     source,
     fetchReviews,
     getStartDate,
   });
 
   return async () => {
-    const targetSlug = process.argv[2];
-
-    // Validate token
-    if (!process.env[envTokenName]) {
-      process.exit(1);
-    }
+    if (!process.env[envTokenName]) return process.exit(1);
 
     const config = loadConfig();
-
-    // Filter businesses using pipe and curried functions from toolkit
-    const businessesToProcess = pipe(
+    const businesses = pipe(
       filterByPlatform(platformField),
-      filterBySlug(targetSlug),
+      filterBySlug(process.argv[2]),
     )(config);
 
-    if (businessesToProcess.length === 0) {
-      return;
-    }
+    if (businesses.length === 0) return;
 
     try {
-      for (const business of businessesToProcess) {
-        // Check if we need to fetch based on frequency
-        if (!shouldFetch(business, source)) {
-          continue;
-        }
-
-        const businessDir = ensureBusinessDir(business);
-        await processBusinessReviews(business, businessDir);
-      }
-
-      // Save updated config
+      await processBusinesses(
+        businesses,
+        processor,
+        ensureBusinessDir,
+        shouldFetch,
+        source,
+      );
       saveConfig(config);
     } catch (_error) {
       process.exit(1);
     }
+  };
+};
+
+/**
+ * Create an Apify fetcher function with normalization pipeline
+ * Reduces duplication across fetch-*.js files
+ */
+const createApifyFetcher = (
+  actorId,
+  urlField,
+  normalize,
+  extractReviews = (x) => x,
+) => {
+  const token = process.env.APIFY_API_TOKEN;
+
+  return async (business, options = {}) => {
+    const url = `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${token}`;
+    const data = {
+      startUrls: [{ url: business[urlField] }],
+      maxReviews: options.maxReviews || CONFIG.maxReviews,
+      ...options.extraParams,
+    };
+
+    const results = await fetchApiArray(url, data);
+
+    return pipe(extractReviews, map(normalize), filter(hasContent))(results);
   };
 };
 
@@ -494,12 +601,22 @@ export {
   shouldFetch,
   updateLastFetched,
   extractGoogleUserId,
-  // FP-style fetching using toolkit
+  // FP-style helpers
+  hasContent,
+  createApifyFetcher,
   pipe,
   filter,
+  flatMap,
+  map,
   filterByPlatform,
   filterBySlug,
   ensureBusinessDir,
   createBusinessProcessor,
   createReviewFetcher,
+  // Pure helpers for testing
+  formatRating,
+  buildReviewData,
+  parseUrlSafe,
+  isRedirect,
+  isDnsError,
 };

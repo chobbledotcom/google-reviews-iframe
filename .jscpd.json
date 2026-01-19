@@ -1,11 +1,10 @@
 {
-  "threshold": 5,
+  "threshold": 0,
   "reporters": ["console", "json"],
   "output": ".jscpd-report",
   "ignore": [
     "**/node_modules/**",
     "**/lib/**",
-    "**/test/**",
     "**/masonry.pkgd.min.js",
     "**/iframe-resizer.child.js",
     "**/reviews-embed.js",

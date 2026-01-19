@@ -16,14 +16,6 @@
     "rules": {
       "suspicious": {
         "noConsole": "off"
-      },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "warn",
-          "options": {
-            "maxAllowedComplexity": 15
-          }
-        }
       }
     }
   }

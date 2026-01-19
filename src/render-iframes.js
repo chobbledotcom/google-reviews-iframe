@@ -7,6 +7,7 @@ import { filter, map, pipe, sort } from "#toolkit/fp/index.js";
 import { CONFIG, loadConfig } from "./lib/shared.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.join(__dirname, "..");
 
 const TEMPLATE_PATH = path.join(__dirname, "iframe-layout.html");
 
@@ -144,12 +145,12 @@ function generateHtml(reviews, _businessSlug, source = "google") {
   // Read HTML template
   let template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  // Read Masonry script
-  const masonryScriptPath = path.join(__dirname, "masonry.pkgd.min.js");
+  // Read Masonry script from root
+  const masonryScriptPath = path.join(rootDir, "masonry.pkgd.min.js");
   const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
 
-  // Read iframe resizer child script
-  const childScriptPath = path.join(__dirname, "iframe-resizer.child.js");
+  // Read bundled iframe resizer child script from dist/
+  const childScriptPath = path.join(rootDir, "dist", "iframe-resizer-child.js");
   const childScript = fs.readFileSync(childScriptPath, "utf8");
 
   // Generate reviews HTML

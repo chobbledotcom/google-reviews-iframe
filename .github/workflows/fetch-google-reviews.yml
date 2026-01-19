@@ -43,15 +43,18 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build embed scripts
+        run: bun run build
+
       - name: Fetch Google Reviews
         if: ${{ github.event.inputs.source != 'facebook' && github.event.inputs.source != 'trustpilot' }}
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            bun fetch-google-reviews.js "${{ github.event.inputs.business_slug }}"
+            bun src/fetch-google-reviews.js "${{ github.event.inputs.business_slug }}"
           else
-            bun fetch-google-reviews.js
+            bun src/fetch-google-reviews.js
           fi
 
       - name: Fetch Facebook Reviews
@@ -60,9 +63,9 @@ jobs:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            bun fetch-facebook-reviews.js "${{ github.event.inputs.business_slug }}"
+            bun src/fetch-facebook-reviews.js "${{ github.event.inputs.business_slug }}"
           else
-            bun fetch-facebook-reviews.js
+            bun src/fetch-facebook-reviews.js
           fi
 
       - name: Fetch Trustpilot Reviews
@@ -71,17 +74,17 @@ jobs:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            bun fetch-trustpilot-reviews.js "${{ github.event.inputs.business_slug }}"
+            bun src/fetch-trustpilot-reviews.js "${{ github.event.inputs.business_slug }}"
           else
-            bun fetch-trustpilot-reviews.js
+            bun src/fetch-trustpilot-reviews.js
           fi
 
       - name: Render iframes
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            bun render-iframes.js "${{ github.event.inputs.business_slug }}"
+            bun src/render-iframes.js "${{ github.event.inputs.business_slug }}"
           else
-            bun render-iframes.js
+            bun src/render-iframes.js
           fi
 
       - name: Check for changes
@@ -111,12 +114,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
+
+      - name: Rebuild after checkout (if needed)
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        run: |
+          bun install
+          bun run build
 
       - name: Create deploy directory
         run: |
           mkdir -p deploy
-          rsync -av --exclude="*.json" reviews/ deploy/
-          cp reviews-embed.js deploy/js
+          rsync -av --exclude="*.json" data/ deploy/
+          cp dist/reviews-embed.js deploy/js
           # Copy reviewer thumbnails if they exist
           if [ -d "images/reviewers" ]; then
             mkdir -p deploy/images/reviewers

@@ -8,9 +8,8 @@
       "**/*.js",
       "!lib",
       "!node_modules",
-      "!masonry.pkgd.min.js",
-      "!iframe-resizer.child.js",
-      "!reviews-embed.js"
+      "!dist",
+      "!masonry.pkgd.min.js"
     ]
   },
   "linter": {

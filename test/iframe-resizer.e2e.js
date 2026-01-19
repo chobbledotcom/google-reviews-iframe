@@ -1,5 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+// Helper to wait for iframe to resize above minimum height
+const waitForIframeResize = (page, minHeight = 200, timeout = 10000) =>
+  page.waitForFunction(
+    (min) => {
+      const iframe = document.getElementById("test-iframe");
+      const height = parseInt(iframe.style.height, 10);
+      return height > min;
+    },
+    minHeight,
+    { timeout },
+  );
+
 test.describe("iframe-resizer integration", () => {
   test("should resize iframe to match content height", async ({ page }) => {
     // Enable console logging for debugging
@@ -20,15 +32,7 @@ test.describe("iframe-resizer integration", () => {
 
     // Wait for iframe-resizer to initialize and resize the iframe
     // The iframe should grow to accommodate its content (> 200px)
-    await page.waitForFunction(
-      () => {
-        const iframe = document.getElementById("test-iframe");
-        const height = parseInt(iframe.style.height, 10);
-        // iframe-resizer sets the height dynamically, should be > 200px
-        return height > 200;
-      },
-      { timeout: 10000 },
-    );
+    await waitForIframeResize(page);
 
     // Get the final height
     const finalHeight = await iframe.evaluate((el) =>
@@ -69,14 +73,7 @@ test.describe("iframe-resizer integration", () => {
     await page.goto("/parent");
 
     // Wait for resize to complete
-    await page.waitForFunction(
-      () => {
-        const iframe = document.getElementById("test-iframe");
-        const height = parseInt(iframe.style.height, 10);
-        return height > 200;
-      },
-      { timeout: 10000 },
-    );
+    await waitForIframeResize(page);
 
     // Get the displayed height from the height monitor
     const displayedHeight = await page.locator("#current-height").textContent();
@@ -98,14 +95,7 @@ test.describe("iframe-resizer integration", () => {
     await page.goto("/parent");
 
     // Wait for iframe to be resized (initial resize)
-    await page.waitForFunction(
-      () => {
-        const iframe = document.getElementById("test-iframe");
-        const height = parseInt(iframe.style.height, 10);
-        return height > 200;
-      },
-      { timeout: 10000 },
-    );
+    await waitForIframeResize(page);
 
     // Wait for masonry and any subsequent iframe-resizer updates to settle
     await page.waitForTimeout(1000);
@@ -158,14 +148,7 @@ test.describe("iframe-resizer integration", () => {
     });
 
     // Wait for initial resize and masonry to complete
-    await page.waitForFunction(
-      () => {
-        const iframe = document.getElementById("test-iframe");
-        const height = parseInt(iframe.style.height, 10);
-        return height > 200;
-      },
-      { timeout: 10000 },
-    );
+    await waitForIframeResize(page);
 
     // Wait for all layout changes to settle
     await page.waitForTimeout(1000);

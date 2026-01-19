@@ -267,7 +267,10 @@ describe("Google fetchReviews", () => {
   it("calls API and processes results", async () => {
     await withApiToken(async () => {
       try {
-        await fetchReviews({ google_business_id: "ChIJtest123" }, { maxReviews: 5 });
+        await fetchReviews(
+          { google_business_id: "ChIJtest123" },
+          { maxReviews: 5 },
+        );
       } catch (error) {
         expect(error).toBeDefined();
       }

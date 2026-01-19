@@ -39,30 +39,15 @@ function loadEnv() {
 }
 
 // Download image using curl and process with sharp
+// Returns false on any failure (curl or sharp)
 async function downloadImageWithCurl(url, filepath1x, filepath2x) {
-  try {
-    const result = execSync(`curl -s -L --max-time 30 "${url}"`, {
-      encoding: "buffer",
-      maxBuffer: 10 * 1024 * 1024,
-    });
-    const buffer = Buffer.from(result);
-
-    // Create 1x version (48x48)
-    await sharp(buffer)
-      .resize(48, 48, { fit: "cover" })
-      .webp({ quality: 80 })
-      .toFile(filepath1x);
-
-    // Create 2x version (96x96) for retina
-    await sharp(buffer)
-      .resize(96, 96, { fit: "cover" })
-      .webp({ quality: 80 })
-      .toFile(filepath2x);
-
-    return true;
-  } catch (_err) {
-    return false;
-  }
+  const result = execSync(`curl -s -L -f --max-time 30 "${url}"`, {
+    encoding: "buffer",
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  const buffer = Buffer.from(result);
+  await processImageBuffer(buffer, { filepath1x, filepath2x });
+  return true;
 }
 
 // Get image file paths for a user
@@ -131,11 +116,18 @@ const handleImageResponse = (response, paths, userId, resolve) => {
   collectAndProcessImage(response, paths, userId, resolve);
 };
 
+// Try curl download, return false on any failure
+const tryCurlDownload = async (url, paths) => {
+  try {
+    return await downloadImageWithCurl(url, paths.filepath1x, paths.filepath2x);
+  } catch {
+    return false;
+  }
+};
+
 // Create error handler for image request
 const createImageErrorHandler = (url, paths, resolve) => async (err) => {
-  const result = isDnsError(err)
-    ? await downloadImageWithCurl(url, paths.filepath1x, paths.filepath2x)
-    : false;
+  const result = isDnsError(err) ? await tryCurlDownload(url, paths) : false;
   resolve(result);
 };
 
@@ -403,9 +395,6 @@ async function saveReview(review, outputDir, source = "google") {
 }
 
 function loadConfig() {
-  if (!fs.existsSync(CONFIG.configPath)) {
-    throw new Error(`Config file not found: ${CONFIG.configPath}`);
-  }
   return JSON.parse(fs.readFileSync(CONFIG.configPath, "utf8"));
 }
 
@@ -539,7 +528,10 @@ const createReviewFetcher = (options) => {
   });
 
   return async () => {
-    if (!process.env[envTokenName]) return process.exit(1);
+    if (!process.env[envTokenName]) {
+      process.exit(1);
+      return;
+    }
 
     const config = loadConfig();
     const businesses = pipe(
@@ -547,9 +539,7 @@ const createReviewFetcher = (options) => {
       filterBySlug(process.argv[2]),
     )(config);
 
-    if (businesses.length === 0) return;
-
-    try {
+    if (businesses.length > 0) {
       await processBusinesses(
         businesses,
         processor,
@@ -558,8 +548,6 @@ const createReviewFetcher = (options) => {
         source,
       );
       saveConfig(config);
-    } catch (_error) {
-      process.exit(1);
     }
   };
 };
@@ -568,12 +556,7 @@ const createReviewFetcher = (options) => {
  * Create an Apify fetcher function with normalization pipeline
  * Reduces duplication across fetch-*.js files
  */
-const createApifyFetcher = (
-  actorId,
-  urlField,
-  normalize,
-  extractReviews = (x) => x,
-) => {
+const createApifyFetcher = (actorId, urlField, normalize) => {
   const token = process.env.APIFY_API_TOKEN;
 
   return async (business, options = {}) => {
@@ -586,7 +569,7 @@ const createApifyFetcher = (
 
     const results = await fetchApiArray(url, data);
 
-    return pipe(extractReviews, map(normalize), filter(hasContent))(results);
+    return pipe(map(normalize), filter(hasContent))(results);
   };
 };
 
@@ -649,6 +632,7 @@ export {
   handleImageResponse,
   createImageErrorHandler,
   setupTimeout,
+  tryCurlDownload,
   // Additional internal helpers for full coverage
   createResponseHandler,
   validateImageInputs,

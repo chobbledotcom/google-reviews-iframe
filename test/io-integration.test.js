@@ -45,6 +45,7 @@ import {
   saveReviewsWithCount,
   setupTimeout,
   shouldFetch,
+  tryCurlDownload,
   tryDownloadThumbnail,
   updateLastFetched,
   validateArrayResponse,
@@ -773,38 +774,6 @@ describe("createReviewFetcher detailed", () => {
     }
   });
 
-  it("handles error in processing gracefully", async () => {
-    const originalToken = process.env.APIFY_API_TOKEN;
-    process.env.APIFY_API_TOKEN = "test-token";
-
-    const mockExit = process.exit;
-    let exitCalled = false;
-    process.exit = () => {
-      exitCalled = true;
-    };
-
-    // Create fetcher with failing fetchReviews
-    const main = createReviewFetcher({
-      platformField: "google_business_id", // This field exists in config
-      source: "test",
-      envTokenName: "APIFY_API_TOKEN",
-      fetchReviews: async () => {
-        throw new Error("Test error");
-      },
-    });
-
-    await main();
-
-    expect(exitCalled).toBe(true);
-
-    process.exit = mockExit;
-    if (originalToken) {
-      process.env.APIFY_API_TOKEN = originalToken;
-    } else {
-      delete process.env.APIFY_API_TOKEN;
-    }
-  });
-
   it("processes businesses and saves config on success", async () => {
     const originalToken = process.env.APIFY_API_TOKEN;
     process.env.APIFY_API_TOKEN = "test-token-success";
@@ -896,14 +865,66 @@ describe("tryDownloadThumbnail", () => {
 });
 
 describe("downloadImageWithCurl", () => {
-  it("returns false for invalid URL", async () => {
+  it("throws error for invalid URL", async () => {
     await withTempDirAsync("curl-test", async (dir) => {
+      try {
+        await downloadImageWithCurl(
+          "https://invalid-url.test/nonexistent.jpg",
+          path.join(dir, "test.webp"),
+          path.join(dir, "test@2x.webp"),
+        );
+        expect(true).toBe(false); // Should not reach here
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
+
+  it("downloads and processes valid image from file URL", async () => {
+    await withTempDirAsync("curl-success-test", async (dir) => {
+      const testImagePath = path.join(
+        process.cwd(),
+        "test/fixtures/test-image.png",
+      );
       const result = await downloadImageWithCurl(
+        `file://${testImagePath}`,
+        path.join(dir, "curl-result.webp"),
+        path.join(dir, "curl-result@2x.webp"),
+      );
+      expect(result).toBe(true);
+      expect(fs.existsSync(path.join(dir, "curl-result.webp"))).toBe(true);
+      expect(fs.existsSync(path.join(dir, "curl-result@2x.webp"))).toBe(true);
+    });
+  });
+});
+
+describe("tryCurlDownload", () => {
+  it("returns false for invalid URL", async () => {
+    await withTempDirAsync("try-curl-test", async (dir) => {
+      const paths = {
+        filepath1x: path.join(dir, "test.webp"),
+        filepath2x: path.join(dir, "test@2x.webp"),
+      };
+      const result = await tryCurlDownload(
         "https://invalid-url.test/nonexistent.jpg",
-        path.join(dir, "test.webp"),
-        path.join(dir, "test@2x.webp"),
+        paths,
       );
       expect(result).toBe(false);
+    });
+  });
+
+  it("returns true for valid file URL", async () => {
+    await withTempDirAsync("try-curl-success", async (dir) => {
+      const testImagePath = path.join(
+        process.cwd(),
+        "test/fixtures/test-image.png",
+      );
+      const paths = {
+        filepath1x: path.join(dir, "try-curl.webp"),
+        filepath2x: path.join(dir, "try-curl@2x.webp"),
+      };
+      const result = await tryCurlDownload(`file://${testImagePath}`, paths);
+      expect(result).toBe(true);
     });
   });
 });

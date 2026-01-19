@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { filter, flatMap, map, pipe } from "#toolkit/fp/index.js";
 import {

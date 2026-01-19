@@ -1,0 +1,19 @@
+[test]
+# Test file patterns
+root = "./test"
+
+# Timeout for individual tests (30 seconds)
+timeout = 30000
+
+# Enable coverage reporting
+coverage = true
+
+# Coverage thresholds - tests fail if coverage drops below these levels
+coverageThreshold = { lines = 1.0, functions = 1.0 }
+
+# Exclude third-party vendored files and submodule from coverage
+coveragePathIgnorePatterns = [
+  "lib/chobble-template/**",
+  "masonry.pkgd.min.js",
+  "iframe-resizer.child.js",
+]

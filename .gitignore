@@ -1,3 +1,5 @@
 .direnv
 .env
 node_modules
+.jscpd-report
+bun.lock

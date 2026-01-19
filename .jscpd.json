@@ -1,0 +1,19 @@
+{
+  "threshold": 0,
+  "reporters": ["console", "json"],
+  "output": ".jscpd-report",
+  "ignore": [
+    "**/node_modules/**",
+    "**/lib/**",
+    "**/masonry.pkgd.min.js",
+    "**/iframe-resizer.child.js",
+    "**/reviews-embed.js",
+    "**/reviews/**",
+    "**/package-lock.json"
+  ],
+  "format": ["javascript"],
+  "absolute": false,
+  "gitignore": true,
+  "minLines": 1,
+  "minTokens": 40
+}

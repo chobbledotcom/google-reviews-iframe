@@ -1,108 +1,122 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { filter, map, pipe, sort } from "#toolkit/fp/index.js";
+import { CONFIG, loadConfig } from "./lib/shared.js";
 
-const CONFIG = {
-	configPath: path.join(__dirname, "config.json"),
-	reviewsDir: path.join(__dirname, "reviews"),
-	templatePath: path.join(__dirname, "iframe-layout.html"),
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const TEMPLATE_PATH = path.join(__dirname, "iframe-layout.html");
+
+// Parse a review file
+const parseReviewFile = (businessDir) => (file) => {
+  try {
+    const content = fs.readFileSync(path.join(businessDir, file), "utf8");
+    return JSON.parse(content);
+  } catch (_error) {
+    return null;
+  }
 };
 
 function loadReviews(businessSlug) {
-	const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
+  const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
 
-	if (!fs.existsSync(businessDir)) {
-		console.warn(`No reviews directory found for ${businessSlug}`);
-		return [];
-	}
+  if (!fs.existsSync(businessDir)) {
+    return [];
+  }
 
-	const reviewFiles = fs
-		.readdirSync(businessDir)
-		.filter((file) => file.endsWith(".json"))
-		.map((file) => {
-			try {
-				const content = fs.readFileSync(path.join(businessDir, file), "utf8");
-				return JSON.parse(content);
-			} catch (error) {
-				console.warn(`Error reading ${file}: ${error.message}`);
-				return null;
-			}
-		})
-		.filter((review) => review !== null)
-		.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const isJsonFile = (file) => file.endsWith(".json");
+  const isNotNull = (review) => review !== null;
+  const byDateDesc = (a, b) => new Date(b.date) - new Date(a.date);
 
-	return reviewFiles;
+  return pipe(
+    filter(isJsonFile),
+    map(parseReviewFile(businessDir)),
+    filter(isNotNull),
+    sort(byDateDesc),
+  )(fs.readdirSync(businessDir));
 }
 
-function generateReviewsHtml(reviews, source = 'google') {
-	if (!reviews || reviews.length === 0) {
-		return '<div class="no-reviews">No reviews available.</div>';
-	}
+// Date formatting helpers - broken into small functions
+const daysBetween = (date1, date2) =>
+  Math.ceil(Math.abs(date2 - date1) / (1000 * 60 * 60 * 24));
 
-	function getInitials(name) {
-		return name
-			.split(" ")
-			.map((word) => word.charAt(0))
-			.join("")
-			.toUpperCase()
-			.substring(0, 2);
-	}
+const formatRelativeTime = (diffDays) => {
+  const units = [
+    { threshold: 0, label: "Today" },
+    { threshold: 1, label: "Yesterday" },
+    { threshold: 7, calc: (d) => `${d} days ago` },
+    { threshold: 30, calc: (d) => `${Math.floor(d / 7)} weeks ago` },
+    { threshold: 365, calc: (d) => `${Math.floor(d / 30)} months ago` },
+  ];
 
-	function formatDate(dateString) {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diffTime = Math.abs(now - date);
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  for (const unit of units) {
+    if (diffDays <= unit.threshold) {
+      return unit.label || unit.calc(diffDays);
+    }
+  }
+  // More than a year
+  return `${Math.floor(diffDays / 365)} years ago`;
+};
 
-		if (diffDays === 0) return "Today";
-		if (diffDays === 1) return "Yesterday";
-		if (diffDays < 7) return `${diffDays} days ago`;
-		if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-		if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-		return `${Math.floor(diffDays / 365)} years ago`;
-	}
+const formatDate = (dateString) => {
+  const diffDays = daysBetween(new Date(dateString), new Date());
+  return formatRelativeTime(diffDays);
+};
 
-	function renderStars(rating) {
-		let stars = "";
-		for (let i = 1; i <= 5; i++) {
-			const filled = i <= rating ? "filled" : "empty";
-			stars += `<span class="star ${filled}">★</span>`;
-		}
-		return `<div class="star-rating">${stars}</div>`;
-	}
+function getInitials(name) {
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0))
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+}
 
-	function renderRating(review, source) {
-		// For Facebook, show "Recommends" badge if rating is 5, otherwise show stars
-		if (source === 'facebook') {
-			if (review.rating === 5) {
-				return '<span class="recommended-badge">👍 Recommends</span>';
-			} else {
-				return '<span class="not-recommended-badge">Does not recommend</span>';
-			}
-		}
-		// For Google, show star rating
-		return renderStars(review.rating);
-	}
+function renderStars(rating) {
+  let stars = "";
+  for (let i = 1; i <= 5; i++) {
+    const filled = i <= rating ? "filled" : "empty";
+    stars += `<span class="star ${filled}">★</span>`;
+  }
+  return `<div class="star-rating">${stars}</div>`;
+}
 
-	return reviews
-		.map((review) => {
-			const initials = getInitials(review.author);
-			const authorLink = review.authorUrl
-				? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
-				: review.author;
+function renderRating(review, source) {
+  // For Facebook, show "Recommends" badge if rating is 5
+  if (source === "facebook") {
+    return review.rating === 5
+      ? '<span class="recommended-badge">👍 Recommends</span>'
+      : '<span class="not-recommended-badge">Does not recommend</span>';
+  }
+  // For Google, show star rating
+  return renderStars(review.rating);
+}
 
-			// Use thumbnail image if available, otherwise fall back to initials
-			let avatarContent = initials;
-			if (review.thumbnail) {
-				const thumb2x = review.thumbnail.replace('.webp', '@2x.webp');
-				avatarContent = `<img src="${review.thumbnail}" srcset="${review.thumbnail} 1x, ${thumb2x} 2x" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`
-			}
+function generateReviewsHtml(reviews, source = "google") {
+  if (!reviews || reviews.length === 0) {
+    return '<div class="no-reviews">No reviews available.</div>';
+  }
 
-			// Determine source from review data or passed parameter
-			const reviewSource = review.source || source;
+  const renderReview = (review) => {
+    const initials = getInitials(review.author);
+    const authorLink = review.authorUrl
+      ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
+      : review.author;
 
-			return `
+    // Use thumbnail image if available, otherwise fall back to initials
+    let avatarContent = initials;
+    if (review.thumbnail) {
+      const thumb2x = review.thumbnail.replace(".webp", "@2x.webp");
+      avatarContent = `<img src="${review.thumbnail}" srcset="${review.thumbnail} 1x, ${thumb2x} 2x" alt="${review.author}" class="review-avatar-img" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='${initials}'">`;
+    }
+
+    // Determine source from review data or passed parameter
+    const reviewSource = review.source || source;
+
+    return `
       <div class="review-card">
         <div class="review-header">
           <div class="review-avatar">${avatarContent}</div>
@@ -114,39 +128,43 @@ function generateReviewsHtml(reviews, source = 'google') {
             </div>
           </div>
         </div>
-        <div class="review-content">${review.content || ''}</div>
+        <div class="review-content">${review.content || ""}</div>
       </div>
     `;
-		})
-		.join("");
+  };
+
+  return map(renderReview)(reviews).join("");
 }
 
-function generateHtml(reviews, businessSlug, source = 'google') {
-	if (!fs.existsSync(CONFIG.templatePath)) {
-		throw new Error(`Template file not found: ${CONFIG.templatePath}`);
-	}
+function generateHtml(reviews, _businessSlug, source = "google") {
+  if (!fs.existsSync(TEMPLATE_PATH)) {
+    throw new Error(`Template file not found: ${TEMPLATE_PATH}`);
+  }
 
-	// Read HTML template
-	let template = fs.readFileSync(CONFIG.templatePath, "utf8");
+  // Read HTML template
+  let template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-	// Read Masonry script
-	const masonryScriptPath = path.join(__dirname, "masonry.pkgd.min.js");
-	const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
+  // Read Masonry script
+  const masonryScriptPath = path.join(__dirname, "masonry.pkgd.min.js");
+  const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
 
-	// Read iframe resizer child script
-	const childScriptPath = path.join(__dirname, "iframe-resizer.child.js");
-	const childScript = fs.readFileSync(childScriptPath, "utf8");
+  // Read iframe resizer child script
+  const childScriptPath = path.join(__dirname, "iframe-resizer.child.js");
+  const childScript = fs.readFileSync(childScriptPath, "utf8");
 
-	// Generate reviews HTML
-	const reviewsHtml = generateReviewsHtml(reviews, source);
+  // Generate reviews HTML
+  const reviewsHtml = generateReviewsHtml(reviews, source);
 
-	// Update title based on source
-	const title = source === 'facebook' ? 'Facebook Reviews' : 'Google Reviews';
-	template = template.replace('<title>Google Reviews</title>', `<title>${title}</title>`);
+  // Update title based on source
+  const title = source === "facebook" ? "Facebook Reviews" : "Google Reviews";
+  template = template.replace(
+    "<title>Google Reviews</title>",
+    `<title>${title}</title>`,
+  );
 
-	// Add Facebook-specific styles if needed
-	if (source === 'facebook') {
-		const fbStyles = `
+  // Add Facebook-specific styles if needed
+  if (source === "facebook") {
+    const fbStyles = `
       .recommended-badge {
         display: inline-flex;
         align-items: center;
@@ -160,22 +178,22 @@ function generateHtml(reviews, businessSlug, source = 'google') {
         font-size: 14px;
       }
     `;
-		template = template.replace('</style>', `${fbStyles}</style>`);
-	}
+    template = template.replace("</style>", `${fbStyles}</style>`);
+  }
 
-	// Replace placeholders
-	let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
-	html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
-	html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
+  // Replace placeholders
+  let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
+  html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
+  html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
-	return html;
+  return html;
 }
 
-function generateEmbedCode(businessSlug, source = 'google') {
-	const iframeUrl = `https://reviews-embeds.chobble.com/${businessSlug}/`;
-	const sourceLabel = source === 'facebook' ? 'Facebook' : 'Google';
+function generateEmbedCode(businessSlug, source = "google") {
+  const iframeUrl = `https://reviews-embeds.chobble.com/${businessSlug}/`;
+  const sourceLabel = source === "facebook" ? "Facebook" : "Google";
 
-	return `<!-- ${sourceLabel} Reviews Embed Code for ${businessSlug} -->
+  return `<!-- ${sourceLabel} Reviews Embed Code for ${businessSlug} -->
 <script async defer src="https://reviews-embeds.chobble.com/js"></script>
 <iframe
   class="${source}-reviews-iframe"
@@ -191,70 +209,49 @@ function generateEmbedCode(businessSlug, source = 'google') {
 }
 
 function renderBusiness(business) {
-	const businessSlug = business.slug;
-	const source = business.source || 'google';
+  const businessSlug = business.slug;
+  const source = business.source || "google";
 
-	console.log(`Rendering ${source} reviews for ${businessSlug}...`);
+  const reviews = loadReviews(businessSlug);
 
-	const reviews = loadReviews(businessSlug);
+  if (reviews.length === 0) {
+    return;
+  }
 
-	if (reviews.length === 0) {
-		console.log(`No reviews found for ${businessSlug}`);
-		return;
-	}
+  try {
+    const html = generateHtml(reviews, businessSlug, source);
 
-	console.log(`Found ${reviews.length} reviews for ${businessSlug}`);
+    const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
+    fs.mkdirSync(businessDir, { recursive: true });
 
-	try {
-		const html = generateHtml(reviews, businessSlug, source);
+    const htmlPath = path.join(businessDir, "index.html");
+    fs.writeFileSync(htmlPath, html);
 
-		const businessDir = path.join(CONFIG.reviewsDir, businessSlug);
-		fs.mkdirSync(businessDir, { recursive: true });
-
-		const htmlPath = path.join(businessDir, "index.html");
-		fs.writeFileSync(htmlPath, html);
-
-		const embedCode = generateEmbedCode(businessSlug, source);
-		const codePath = path.join(businessDir, "code.txt");
-		fs.writeFileSync(codePath, embedCode);
-
-		console.log(`✓ Generated ${htmlPath}`);
-		console.log(`✓ Generated ${codePath}`);
-	} catch (error) {
-		console.error(`Error rendering ${businessSlug}:`, error.message);
-	}
+    const embedCode = generateEmbedCode(businessSlug, source);
+    const codePath = path.join(businessDir, "code.txt");
+    fs.writeFileSync(codePath, embedCode);
+  } catch (_error) {
+    // Skip business on error
+  }
 }
 
 async function main() {
-	const args = process.argv.slice(2);
-	const targetSlug = args[0];
+  const targetSlug = process.argv[2];
 
-	if (!fs.existsSync(CONFIG.configPath)) {
-		console.error(`Error: ${CONFIG.configPath} not found`);
-		process.exit(1);
-	}
+  const config = loadConfig();
 
-	const config = JSON.parse(fs.readFileSync(CONFIG.configPath, "utf8"));
-
-	if (targetSlug) {
-		// Render specific business
-		const business = config.find((b) => b.slug === targetSlug);
-		if (!business) {
-			console.error(`Business with slug "${targetSlug}" not found in config`);
-			process.exit(1);
-		}
-		renderBusiness(business);
-	} else {
-		// Render all businesses
-		console.log("Rendering all businesses...");
-		for (const business of config) {
-			renderBusiness(business);
-		}
-	}
-
-	console.log("\nRendering complete!");
+  if (targetSlug) {
+    // Render specific business
+    const business = config.find((b) => b.slug === targetSlug);
+    if (!business) {
+      process.exit(1);
+    }
+    renderBusiness(business);
+  } else {
+    for (const business of config) {
+      renderBusiness(business);
+    }
+  }
 }
 
-if (require.main === module) {
-	main();
-}
+main();

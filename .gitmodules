@@ -1,0 +1,3 @@
+[submodule "lib/chobble-template"]
+	path = lib/chobble-template
+	url = https://github.com/chobbledotcom/chobble-template

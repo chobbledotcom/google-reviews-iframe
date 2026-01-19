@@ -122,10 +122,27 @@
     </div>
     <div id="content-height"></div>
     <script>
+      // Store iframe-resizer initialization for later
+      window.__iframeResizerInit = function() {
+        var script = document.createElement('script');
+        script.src = '/dist/iframe-resizer-child.js';
+        document.body.appendChild(script);
+      };
+    </script>
+    <script>
       // Initialize BalancedMasonryGrid only if viewport width > 600px
+      // Then initialize iframe-resizer AFTER masonry completes
       (function () {
         var grid = null;
         var container = null;
+        var iframeResizerInitialized = false;
+
+        function initIframeResizer() {
+          if (!iframeResizerInitialized && window.__iframeResizerInit) {
+            iframeResizerInitialized = true;
+            window.__iframeResizerInit();
+          }
+        }
 
         function measureAndSetAspectRatios() {
           var cards = document.querySelectorAll(".review-card");
@@ -139,7 +156,11 @@
 
         function initMasonry() {
           container = document.querySelector(".reviews-container");
-          if (!container) return;
+          if (!container) {
+            // No container, just init iframe-resizer
+            initIframeResizer();
+            return;
+          }
 
           if (window.innerWidth > 600) {
             if (!grid) {
@@ -167,6 +188,9 @@
               });
             }
           }
+
+          // Initialize iframe-resizer AFTER masonry is done
+          initIframeResizer();
         }
 
         // Initialize on load
@@ -192,6 +216,5 @@
       updateHeight();
       window.addEventListener("resize", updateHeight);
     </script>
-    <script src="/dist/iframe-resizer-child.js"></script>
   </body>
 </html>

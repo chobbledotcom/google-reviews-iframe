@@ -81,6 +81,7 @@
         align-items: center;
         margin-bottom: 15px;
         gap: 12px;
+        height: 48px;
       }
 
       .review-avatar {
@@ -129,6 +130,9 @@
         gap: 8px;
         font-size: 14px;
         color: #666;
+        height: 16px;
+        display: flex;
+        align-items: baseline;
       }
 
       .star-rating {
@@ -175,10 +179,10 @@
       }
     </style>
     <script>
-      {{MASONRY_SCRIPT}}
+      {{ MASONRY_SCRIPT }}
     </script>
     <script>
-      {{IFRAME_RESIZER_SCRIPT}}
+      {{ IFRAME_RESIZER_SCRIPT }}
     </script>
     <script>
       // Initialize BalancedMasonryGrid only if viewport width > 600px

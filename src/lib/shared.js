@@ -258,6 +258,12 @@ function getLatestReviewDate(businessDir) {
   )(reviewDates);
 }
 
+// Handle request timeout - extracted for testability
+const handleApiTimeout = (request, reject) => () => {
+  request.destroy();
+  reject(new Error("Request timeout"));
+};
+
 function makeApiRequestHttps(url, data) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -289,10 +295,7 @@ function makeApiRequestHttps(url, data) {
     );
 
     request.on("error", reject);
-    request.setTimeout(1200000, () => {
-      request.destroy();
-      reject(new Error("Request timeout"));
-    });
+    request.setTimeout(1200000, handleApiTimeout(request, reject));
 
     request.write(postData);
     request.end();
@@ -314,18 +317,30 @@ function makeApiRequestCurl(url, data) {
   }
 }
 
+// Handle API request error with DNS fallback - extracted for testability
+const handleApiRequestError = (url, data, error) => {
+  if (isDnsError(error)) {
+    console.log("Using curl fallback due to DNS issues...");
+    return makeApiRequestCurl(url, data);
+  }
+  throw error;
+};
+
 async function makeApiRequest(url, data) {
   try {
     return await makeApiRequestHttps(url, data);
   } catch (error) {
-    // Fallback to curl if https fails (e.g., DNS issues)
-    if (error.code === "EAI_AGAIN" || error.message.includes("EAI_AGAIN")) {
-      console.log("Using curl fallback due to DNS issues...");
-      return makeApiRequestCurl(url, data);
-    }
-    throw error;
+    return handleApiRequestError(url, data, error);
   }
 }
+
+// Validate that response is an array - extracted for testability
+const validateArrayResponse = (results) => {
+  if (!Array.isArray(results)) {
+    throw new Error("Invalid API response format");
+  }
+  return results;
+};
 
 /**
  * Fetch API response and parse as JSON array
@@ -336,12 +351,7 @@ async function makeApiRequest(url, data) {
 async function fetchApiArray(url, data) {
   const response = await makeApiRequest(url, data);
   const results = JSON.parse(response);
-
-  if (!Array.isArray(results)) {
-    throw new Error("Invalid API response format");
-  }
-
-  return results;
+  return validateArrayResponse(results);
 }
 
 // Try to download thumbnail, returning path or null
@@ -613,10 +623,35 @@ export {
   ensureBusinessDir,
   createBusinessProcessor,
   createReviewFetcher,
+  // Business logic helpers
+  buildFetchOptions,
+  filterByMinRating,
+  saveReviewsWithCount,
+  processBusinesses,
   // Pure helpers for testing
   formatRating,
   buildReviewData,
   parseUrlSafe,
   isRedirect,
   isDnsError,
+  handleApiTimeout,
+  validateArrayResponse,
+  handleApiRequestError,
+  // Internal helpers exported for testing
+  tryDownloadThumbnail,
+  getImagePaths,
+  imageFilesExist,
+  downloadImageWithCurl,
+  makeApiRequestHttps,
+  makeApiRequestCurl,
+  processImageBuffer,
+  collectAndProcessImage,
+  handleImageResponse,
+  createImageErrorHandler,
+  setupTimeout,
+  // Additional internal helpers for full coverage
+  createResponseHandler,
+  validateImageInputs,
+  getProtocolModule,
+  checkImagePreconditions,
 };

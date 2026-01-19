@@ -9,10 +9,7 @@ timeout = 30000
 coverage = true
 
 # Coverage thresholds - tests fail if coverage drops below these levels
-# Set to 35% as I/O-heavy code (network requests, file operations) can't be
-# effectively unit tested in Bun without complex mocking infrastructure.
-# Integration tests are more appropriate for I/O operations.
-coverageThreshold = { lines = 0.35, functions = 0.30 }
+coverageThreshold = { lines = 1.0, functions = 1.0 }
 
 # Exclude third-party vendored files and submodule from coverage
 # Also exclude I/O-heavy files better suited for integration tests

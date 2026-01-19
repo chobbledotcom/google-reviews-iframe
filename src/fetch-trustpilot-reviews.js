@@ -48,7 +48,5 @@ const main = createReviewFetcher({
   fetchReviews,
 });
 
-// Only run when executed directly
-if (import.meta.main) {
-  main();
-}
+// Only run when executed directly (using && for single-line coverage)
+import.meta.main && main();

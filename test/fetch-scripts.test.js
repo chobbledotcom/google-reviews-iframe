@@ -205,15 +205,27 @@ describe("Trustpilot User ID Extraction", () => {
 });
 
 describe("Trustpilot Content Building", () => {
-  it("combines title and text", () => {
+  it("combines title and text with period", () => {
     expect(buildTrustpilotContent("Title", "Body text")).toBe(
-      "Title\n\nBody text",
+      "Title.\n\nBody text",
     );
   });
 
-  it("handles title only", () => {
-    expect(buildTrustpilotContent("Title", null)).toBe("Title");
-    expect(buildTrustpilotContent("Title", "")).toBe("Title");
+  it("preserves existing sentence punctuation", () => {
+    expect(buildTrustpilotContent("Title!", "Body text")).toBe(
+      "Title!\n\nBody text",
+    );
+    expect(buildTrustpilotContent("Title?", "Body text")).toBe(
+      "Title?\n\nBody text",
+    );
+    expect(buildTrustpilotContent("Title.", "Body text")).toBe(
+      "Title.\n\nBody text",
+    );
+  });
+
+  it("handles title only with period", () => {
+    expect(buildTrustpilotContent("Title", null)).toBe("Title.");
+    expect(buildTrustpilotContent("Title", "")).toBe("Title.");
   });
 
   it("handles text only", () => {
@@ -224,6 +236,21 @@ describe("Trustpilot Content Building", () => {
   it("handles empty inputs", () => {
     expect(buildTrustpilotContent(null, null)).toBe("");
     expect(buildTrustpilotContent("", "")).toBe("");
+  });
+
+  it("strips title when body starts with it", () => {
+    expect(buildTrustpilotContent("Great service", "Great service and fast delivery")).toBe(
+      "Great service and fast delivery",
+    );
+  });
+
+  it("strips truncated title with ellipsis", () => {
+    expect(buildTrustpilotContent("Great service...", "Great service and fast delivery")).toBe(
+      "Great service and fast delivery",
+    );
+    expect(buildTrustpilotContent("Great service…", "Great service and fast delivery")).toBe(
+      "Great service and fast delivery",
+    );
   });
 });
 

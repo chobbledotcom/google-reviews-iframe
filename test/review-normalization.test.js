@@ -213,13 +213,13 @@ describe("Trustpilot Review Normalization", () => {
     expect(normalized.rating).toBe(0);
   });
 
-  it("combines title and text with double newline", () => {
+  it("combines title and text with period and double newline", () => {
     const raw = createTrustpilotReview({
       reviewTitle: "Great Title",
       reviewText: "Body text here",
     });
     const normalized = normalizeTrustpilotReview(raw);
-    expect(normalized.content).toBe("Great Title\n\nBody text here");
+    expect(normalized.content).toBe("Great Title.\n\nBody text here");
   });
 
   it("uses only text when title is missing", () => {
@@ -231,13 +231,13 @@ describe("Trustpilot Review Normalization", () => {
     expect(normalized.content).toBe("Just the body");
   });
 
-  it("uses only title when text is missing", () => {
+  it("uses only title with period when text is missing", () => {
     const raw = createTrustpilotReview({
       reviewTitle: "Just a title",
       reviewText: "",
     });
     const normalized = normalizeTrustpilotReview(raw);
-    expect(normalized.content).toBe("Just a title");
+    expect(normalized.content).toBe("Just a title.");
   });
 
   it("extracts user ID with tp- prefix from reviewId", () => {
@@ -258,8 +258,8 @@ describe("Trustpilot Review Normalization", () => {
   });
 
   it("buildTrustpilotContent handles various combinations", () => {
-    expect(buildTrustpilotContent("Title", "Text")).toBe("Title\n\nText");
-    expect(buildTrustpilotContent("Title", "")).toBe("Title");
+    expect(buildTrustpilotContent("Title", "Text")).toBe("Title.\n\nText");
+    expect(buildTrustpilotContent("Title", "")).toBe("Title.");
     expect(buildTrustpilotContent(null, "Text")).toBe("Text");
     expect(buildTrustpilotContent("", "Text")).toBe("Text");
   });

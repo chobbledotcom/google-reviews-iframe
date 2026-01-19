@@ -2,6 +2,9 @@
 # Test file patterns
 root = "./test"
 
+# Exclude Playwright tests (run separately with npx playwright test)
+testIgnorePatterns = ["*.spec.js"]
+
 # Timeout for individual tests (30 seconds)
 timeout = 30000
 
@@ -15,7 +18,6 @@ coverageThreshold = { lines = 1.0, functions = 1.0 }
 # Also exclude I/O-heavy files better suited for integration tests
 coveragePathIgnorePatterns = [
   "lib/chobble-template/**",
-  "masonry.pkgd.min.js",
   "iframe-resizer.child.js",
   "test/**",
 ]

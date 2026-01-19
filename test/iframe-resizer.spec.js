@@ -89,4 +89,109 @@ test.describe("iframe-resizer integration", () => {
     // They should match (displayed height contains the same value as style.height)
     expect(displayedHeight).toContain(actualHeight.replace("px", ""));
   });
+
+  test("should have iframe height >= child content height after masonry", async ({
+    page,
+  }) => {
+    // This test verifies that the iframe is sized correctly AFTER masonry layout
+    // The bug: iframe-resizer reports height before masonry finishes, causing undersized iframe
+    await page.goto("/parent");
+
+    // Wait for iframe to be resized (initial resize)
+    await page.waitForFunction(
+      () => {
+        const iframe = document.getElementById("test-iframe");
+        const height = parseInt(iframe.style.height, 10);
+        return height > 200;
+      },
+      { timeout: 10000 },
+    );
+
+    // Wait for masonry and any subsequent iframe-resizer updates to settle
+    await page.waitForTimeout(1000);
+
+    // Get the iframe's set height (what parent set based on child's report)
+    const iframeHeight = await page
+      .locator("#test-iframe")
+      .evaluate((el) => parseInt(el.style.height, 10));
+
+    // Get the actual content height from inside the child iframe
+    const frame = page.frameLocator("#test-iframe");
+    const childContentHeight = await frame.locator("body").evaluate((body) => {
+      return body.scrollHeight;
+    });
+
+    console.log(
+      `Iframe height: ${iframeHeight}px, Child content height: ${childContentHeight}px`,
+    );
+
+    // The iframe height should be >= the child's actual content height
+    // If masonry runs after iframe-resizer reports, this will fail
+    expect(iframeHeight).toBeGreaterThanOrEqual(childContentHeight);
+  });
+
+  test("should resize iframe when masonry layout changes content height", async ({
+    page,
+  }) => {
+    // This test tracks the sequence of height changes to verify proper ordering
+    const heightChanges = [];
+
+    await page.goto("/parent");
+
+    // Set up listener for iframe height changes
+    await page.evaluate(() => {
+      const iframe = document.getElementById("test-iframe");
+      window.__heightChanges = [];
+      const observer = new MutationObserver(() => {
+        const height = parseInt(iframe.style.height, 10);
+        if (height > 0) {
+          window.__heightChanges.push({
+            height,
+            time: Date.now(),
+          });
+        }
+      });
+      observer.observe(iframe, {
+        attributes: true,
+        attributeFilter: ["style"],
+      });
+    });
+
+    // Wait for initial resize and masonry to complete
+    await page.waitForFunction(
+      () => {
+        const iframe = document.getElementById("test-iframe");
+        const height = parseInt(iframe.style.height, 10);
+        return height > 200;
+      },
+      { timeout: 10000 },
+    );
+
+    // Wait for all layout changes to settle
+    await page.waitForTimeout(1000);
+
+    // Get height history and final content height
+    const heightHistory = await page.evaluate(() => window.__heightChanges);
+    const frame = page.frameLocator("#test-iframe");
+    const finalContentHeight = await frame.locator("body").evaluate((body) => {
+      return body.scrollHeight;
+    });
+
+    console.log("Height change history:", heightHistory);
+    console.log("Final content height:", finalContentHeight);
+
+    // Verify the final iframe height matches content
+    const finalIframeHeight = await page
+      .locator("#test-iframe")
+      .evaluate((el) => parseInt(el.style.height, 10));
+
+    expect(finalIframeHeight).toBeGreaterThanOrEqual(finalContentHeight);
+
+    // If there were multiple height changes, check that height was eventually corrected
+    if (heightHistory.length > 1) {
+      console.log(
+        `Iframe was resized ${heightHistory.length} times, final: ${finalIframeHeight}px`,
+      );
+    }
+  });
 });

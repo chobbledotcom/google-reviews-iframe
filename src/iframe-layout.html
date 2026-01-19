@@ -181,11 +181,29 @@
     <script>
       {{MASONRY_SCRIPT}}
     </script>
+  </head>
+  <body>
+    <div class="reviews-container">{{REVIEWS_HTML}}</div>
+    <script>
+      // Store iframe-resizer script to execute after masonry
+      window.__iframeResizerInit = function() {
+        {{IFRAME_RESIZER_SCRIPT}}
+      };
+    </script>
     <script>
       // Initialize BalancedMasonryGrid only if viewport width > 600px
+      // Then initialize iframe-resizer AFTER masonry completes
       (function () {
         var grid = null;
         var container = null;
+        var iframeResizerInitialized = false;
+
+        function initIframeResizer() {
+          if (!iframeResizerInitialized && window.__iframeResizerInit) {
+            iframeResizerInitialized = true;
+            window.__iframeResizerInit();
+          }
+        }
 
         function measureAndSetAspectRatios() {
           var cards = document.querySelectorAll(".review-card");
@@ -199,7 +217,11 @@
 
         function initMasonry() {
           container = document.querySelector(".reviews-container");
-          if (!container) return;
+          if (!container) {
+            // No container, just init iframe-resizer
+            initIframeResizer();
+            return;
+          }
 
           if (window.innerWidth > 600) {
             if (!grid) {
@@ -228,6 +250,9 @@
               });
             }
           }
+
+          // Initialize iframe-resizer AFTER masonry is done
+          initIframeResizer();
         }
 
         // Initialize on load
@@ -244,12 +269,6 @@
           resizeTimeout = setTimeout(initMasonry, 150);
         });
       })();
-    </script>
-  </head>
-  <body>
-    <div class="reviews-container">{{REVIEWS_HTML}}</div>
-    <script>
-      {{IFRAME_RESIZER_SCRIPT}}
     </script>
   </body>
 </html>

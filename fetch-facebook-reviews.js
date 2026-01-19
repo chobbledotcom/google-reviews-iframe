@@ -85,8 +85,8 @@ async function main() {
 
   const config = loadConfig();
 
-  // Filter to Facebook businesses only
-  const facebookBusinesses = config.filter(b => b.source === 'facebook');
+  // Filter to businesses with Facebook page URL
+  const facebookBusinesses = config.filter(b => b.facebook_page_url);
 
   // Filter by target slug if provided
   const businessesToProcess = targetSlug
@@ -107,10 +107,10 @@ async function main() {
       console.log(`\nProcessing Facebook business: ${business.slug} (${business.facebook_page_url})`);
 
       // Check if we need to fetch based on frequency
-      if (!shouldFetch(business)) {
-        const lastFetched = new Date(business.last_fetched);
+      if (!shouldFetch(business, 'facebook')) {
+        const lastFetched = new Date(business.last_fetched_facebook || business.last_fetched);
         const daysSinceFetch = Math.floor((new Date() - lastFetched) / (1000 * 60 * 60 * 24));
-        console.log(`Skipping ${business.slug} - fetched ${daysSinceFetch} days ago (frequency: ${business.fetch_frequency_days} days)`);
+        console.log(`Skipping ${business.slug} (Facebook) - fetched ${daysSinceFetch} days ago (frequency: ${business.fetch_frequency_days} days)`);
         continue;
       }
 
@@ -136,8 +136,8 @@ async function main() {
 
       console.log(`Saved ${saved} new reviews (${filteredReviews.length - saved} already existed)`);
 
-      // Update last_fetched in config
-      updateLastFetched(business);
+      // Update last_fetched_facebook in config
+      updateLastFetched(business, 'facebook');
     }
 
     // Save updated config

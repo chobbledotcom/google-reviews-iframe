@@ -80,8 +80,8 @@ async function main() {
 
   const config = loadConfig();
 
-  // Filter to Google businesses only
-  const googleBusinesses = config.filter(b => !b.source || b.source === 'google');
+  // Filter to businesses with Google business ID
+  const googleBusinesses = config.filter(b => b.google_business_id);
 
   // Filter by target slug if provided
   const businessesToProcess = targetSlug
@@ -102,10 +102,10 @@ async function main() {
       console.log(`\nProcessing Google business: ${business.slug} (${business.google_business_id})`);
 
       // Check if we need to fetch based on frequency
-      if (!shouldFetch(business)) {
-        const lastFetched = new Date(business.last_fetched);
+      if (!shouldFetch(business, 'google')) {
+        const lastFetched = new Date(business.last_fetched_google || business.last_fetched);
         const daysSinceFetch = Math.floor((new Date() - lastFetched) / (1000 * 60 * 60 * 24));
-        console.log(`Skipping ${business.slug} - fetched ${daysSinceFetch} days ago (frequency: ${business.fetch_frequency_days} days)`);
+        console.log(`Skipping ${business.slug} (Google) - fetched ${daysSinceFetch} days ago (frequency: ${business.fetch_frequency_days} days)`);
         continue;
       }
 
@@ -134,8 +134,8 @@ async function main() {
 
       console.log(`Saved ${saved} new reviews (${filteredReviews.length - saved} already existed)`);
 
-      // Update last_fetched in config
-      updateLastFetched(business);
+      // Update last_fetched_google in config
+      updateLastFetched(business, 'google');
     }
 
     // Save updated config

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DB Entertainment - CLS Test</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      .iframe-wrapper {
+        border: 2px solid #ccc;
+        padding: 10px;
+        background: #f5f5f5;
+      }
+      #height-display {
+        margin-top: 10px;
+        padding: 10px;
+        background: #e0e0e0;
+      }
+    </style>
+    <script src="/js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>DB Entertainment Reviews - CLS Test Page</h1>
+      <div class="iframe-wrapper">
+        <iframe
+          id="test-iframe"
+          class="google-reviews-iframe"
+          src="/db-entertainment"
+          style="width: 100%; height: 200px; border: none"
+        ></iframe>
+      </div>
+      <div id="height-display">
+        Iframe height: <span id="current-height">200</span>px
+      </div>
+    </div>
+    <script>
+      // Monitor iframe height changes
+      const iframe = document.getElementById("test-iframe");
+      const heightDisplay = document.getElementById("current-height");
+
+      function updateHeightDisplay() {
+        const height = iframe.style.height || iframe.offsetHeight;
+        heightDisplay.textContent = height;
+      }
+
+      // Use MutationObserver to detect style changes
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "style"
+          ) {
+            updateHeightDisplay();
+          }
+        }
+      });
+
+      observer.observe(iframe, { attributes: true });
+
+      // Initial update
+      setTimeout(updateHeightDisplay, 100);
+    </script>
+  </body>
+</html>

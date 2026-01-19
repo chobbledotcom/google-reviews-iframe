@@ -29,6 +29,10 @@ const server = Bun.serve({
       filePath = path.join(__dirname, "fixtures", "parent.html");
     } else if (pathname === "/child" || pathname === "/child/") {
       filePath = path.join(__dirname, "fixtures", "child.html");
+    } else if (pathname === "/db-entertainment" || pathname === "/db-entertainment/") {
+      filePath = path.join(rootDir, "data", "db-entertainment", "index.html");
+    } else if (pathname === "/parent-db-entertainment") {
+      filePath = path.join(__dirname, "fixtures", "parent-db-entertainment.html");
     } else if (pathname === "/js" || pathname === "/reviews-embed.js") {
       filePath = path.join(rootDir, "dist", "reviews-embed.js");
     } else if (pathname.startsWith("/dist/")) {

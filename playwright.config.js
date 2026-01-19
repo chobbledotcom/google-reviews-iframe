@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./test",
+  testMatch: "**/*.e2e.js",
   timeout: 30000,
   retries: 0,
   use: {

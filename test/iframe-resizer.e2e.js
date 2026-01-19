@@ -87,17 +87,16 @@ test.describe("iframe-resizer integration", () => {
     expect(displayedHeight).toContain(actualHeight.replace("px", ""));
   });
 
-  test("should have iframe height >= child content height after masonry", async ({
+  test("should have iframe height approximately match child content height", async ({
     page,
   }) => {
-    // This test verifies that the iframe is sized correctly AFTER masonry layout
-    // The bug: iframe-resizer reports height before masonry finishes, causing undersized iframe
+    // This test verifies that the iframe is sized correctly for the content
     await page.goto("/parent");
 
     // Wait for iframe to be resized (initial resize)
     await waitForIframeResize(page);
 
-    // Wait for masonry and any subsequent iframe-resizer updates to settle
+    // Wait for layout to settle
     await page.waitForTimeout(1000);
 
     // Get the iframe's set height (what parent set based on child's report)
@@ -115,17 +114,13 @@ test.describe("iframe-resizer integration", () => {
       `Iframe height: ${iframeHeight}px, Child content height: ${childContentHeight}px`,
     );
 
-    // The iframe height should be >= the child's actual content height
-    // If masonry runs after iframe-resizer reports, this will fail
-    expect(iframeHeight).toBeGreaterThanOrEqual(childContentHeight);
+    // The iframe height should be within 2px of the child's content height
+    // (allow for small rounding differences between browsers)
+    expect(Math.abs(iframeHeight - childContentHeight)).toBeLessThanOrEqual(2);
   });
 
-  test("should resize iframe when masonry layout changes content height", async ({
-    page,
-  }) => {
-    // This test tracks the sequence of height changes to verify proper ordering
-    const heightChanges = [];
-
+  test("should resize iframe to accommodate content", async ({ page }) => {
+    // This test tracks height changes to verify resizing works
     await page.goto("/parent");
 
     // Set up listener for iframe height changes
@@ -147,7 +142,7 @@ test.describe("iframe-resizer integration", () => {
       });
     });
 
-    // Wait for initial resize and masonry to complete
+    // Wait for initial resize
     await waitForIframeResize(page);
 
     // Wait for all layout changes to settle
@@ -163,14 +158,14 @@ test.describe("iframe-resizer integration", () => {
     console.log("Height change history:", heightHistory);
     console.log("Final content height:", finalContentHeight);
 
-    // Verify the final iframe height matches content
+    // Verify the final iframe height is close to content height (within 2px)
     const finalIframeHeight = await page
       .locator("#test-iframe")
       .evaluate((el) => parseInt(el.style.height, 10));
 
-    expect(finalIframeHeight).toBeGreaterThanOrEqual(finalContentHeight);
+    expect(Math.abs(finalIframeHeight - finalContentHeight)).toBeLessThanOrEqual(2);
 
-    // If there were multiple height changes, check that height was eventually corrected
+    // Log if there were multiple height changes
     if (heightHistory.length > 1) {
       console.log(
         `Iframe was resized ${heightHistory.length} times, final: ${finalIframeHeight}px`,

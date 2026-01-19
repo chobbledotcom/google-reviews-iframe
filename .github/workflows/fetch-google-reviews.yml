@@ -1,4 +1,4 @@
-name: Fetch Google Reviews and Deploy
+name: Fetch Reviews and Deploy
 
 on:
   push:
@@ -11,13 +11,22 @@ on:
         description: 'Business slug to fetch (optional, fetches all if empty)'
         required: false
         type: string
+      source:
+        description: 'Source to fetch (google, facebook, or all)'
+        required: false
+        type: choice
+        options:
+          - all
+          - google
+          - facebook
+        default: all
 
 jobs:
   fetch-reviews:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,6 +42,7 @@ jobs:
         run: npm install
 
       - name: Fetch Google Reviews
+        if: ${{ github.event.inputs.source != 'facebook' }}
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
@@ -40,6 +50,17 @@ jobs:
             node fetch-google-reviews.js "${{ github.event.inputs.business_slug }}"
           else
             node fetch-google-reviews.js
+          fi
+
+      - name: Fetch Facebook Reviews
+        if: ${{ github.event.inputs.source != 'google' }}
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.business_slug }}" ]; then
+            node fetch-facebook-reviews.js "${{ github.event.inputs.business_slug }}"
+          else
+            node fetch-facebook-reviews.js
           fi
 
       - name: Render iframes
@@ -66,9 +87,9 @@ jobs:
           git config --local user.name "GitHub Action"
           git add .
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            git commit -m "Auto-update: Fetch new Google reviews for ${{ github.event.inputs.business_slug }}"
+            git commit -m "Auto-update: Fetch new reviews for ${{ github.event.inputs.business_slug }}"
           else
-            git commit -m "Auto-update: Fetch new Google reviews"
+            git commit -m "Auto-update: Fetch new reviews"
           fi
           git push
 

@@ -62,6 +62,12 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
         margin-bottom: 20px;
+        /* Performance: isolate each card's layout/paint from affecting others */
+        contain: layout paint style;
+        /* Skip rendering for off-screen cards - major perf win for large lists */
+        content-visibility: auto;
+        /* Estimated height hint for off-screen cards (prevents scroll jumpiness) */
+        contain-intrinsic-size: auto 250px;
       }
 
       @media (max-device-width: 600px) {
@@ -190,6 +196,8 @@
       html,
       body {
         overflow-x: hidden;
+        /* Containment: tells browser this content is isolated from the rest of the page */
+        contain: content;
       }
     </style>
   </head>

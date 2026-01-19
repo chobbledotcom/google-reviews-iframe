@@ -27,9 +27,24 @@ const normalizeReview = (review) => {
   const rating = Number.parseInt(review.ratingValue, 10) || 0;
 
   // Combine title and text if both exist
-  const content = review.reviewTitle
-    ? `${review.reviewTitle}\n\n${review.reviewText || ""}`
-    : review.reviewText || "";
+  let content;
+  if (review.reviewTitle) {
+    let title = review.reviewTitle.trim();
+    const body = review.reviewText || "";
+
+    // Skip title if body already starts with it (avoids duplication)
+    if (body.toLowerCase().startsWith(title.toLowerCase())) {
+      content = body;
+    } else {
+      // Add period to title if it doesn't end with sentence punctuation
+      if (!/[.!?]$/.test(title)) {
+        title = `${title}.`;
+      }
+      content = `${title}\n\n${body}`;
+    }
+  } else {
+    content = review.reviewText || "";
+  }
 
   return {
     content: content.trim(),

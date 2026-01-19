@@ -182,70 +182,6 @@
       function $(k,q,H){if(k.length>0){if(k[0].target===q)return k[0].contentRect.width;if(k.length===2&&k[1].target===q)return k[1].contentRect.width}return H}class j{constructor(k){this.container=k;let q=getComputedStyle(k),H=document.createElement("div");k.append(H);let I=new ResizeObserver((A)=>{let D=$(A,k,this.containerWidth),Q=$(A,H,this.frameWidth),F=this.gap;if((F===-1||Q!==this.frameWidth)&&(F=parseFloat(q.gap),isNaN(F)&&(F=0)),F===this.gap&&D===this.containerWidth&&Q===this.frameWidth)return;this.containerWidth=D,this.frameWidth=Q;let O=Math.round((D+F)/(Q+F));if(this.columnsCount===O&&F===this.gap){K(),this.resizeHeight(),z();return}this.gap=F,this.columnsCount=O,K(),this.reflow(),z()}),J=new MutationObserver(()=>{K(),k.append(H),this.columnsCount>0&&this.reflow(!0),z()}),z=()=>{J.observe(k,{childList:!0,attributeFilter:["style"],subtree:!0})},K=()=>{J.disconnect()};this.marker=H,this.mutationObserver=J,this.resizeObserver=I,I.observe(k),I.observe(H),z()}gap=-1;frameWidth=-1;containerWidth=-1;columnsCount=-1;containerAspectRatio=-1;framesPositionsMap=new WeakMap;resizeObserver;mutationObserver;marker;resizeHeight(){let{container:k,containerAspectRatio:q}=this;q!==-1?k.style.height=`${this.containerWidth*q}px`:k.style.removeProperty("height")}getFrameAspectRatio(k){let q=parseFloat(k.style.getPropertyValue("--width"));return parseFloat(k.style.getPropertyValue("--height"))/q}getFramePosition(k,q,H){let{gap:I,columnsCount:J,frameWidth:z}=this,K=this.getFrameAspectRatio(k),A=K*z,D=H+A+(q>=J?I:0);return{aspectRatio:K,realIndex:q,virtualIndex:q,height:A,realBottom:D,virtualBottom:D,width:z}}getFramePositionAndCache(k,q,H){let I=this.getFramePosition(k,q,H);return this.framesPositionsMap.set(k,I),I}getCachedScaledFramePosition(k,q,H){let{frameWidth:I}=this,J=this.getFrameAspectRatio(k),z=this.framesPositionsMap.get(k);if(!z||z.realIndex!==q||z.virtualIndex>=H||z.aspectRatio!==J)return null;let K=I/z.width;return z.height*=K,z.realBottom*=K,z.virtualBottom*=K,z.width=I,z}destroy(){let{resizeObserver:k,mutationObserver:q,marker:H,container:I,framesPositionsMap:J}=this;k.disconnect(),q.disconnect(),H.remove();let z=I.children;I.style.removeProperty("height");for(let K=0,A,D=z.length;K<D;K++)A=z[K],A.style.removeProperty("transform"),A.style.removeProperty("order"),J.delete(A)}}class _ extends j{bufferA=[];bufferB=[];balanceRow(k,q,H){let{columnsCount:I,bufferA:J,bufferB:z}=this,K=H-q+1;J.length=K,z.length=K;for(let A=0,D=q;D<=H;A++,D++)J[A]=k[D-I],z[A]=k[D];J.sort((A,D)=>D.virtualBottom-A.virtualBottom),z.sort((A,D)=>A.height-D.height);for(let A=0,D=q,Q=0;D<=H;A++,D++)Q=J[A].virtualIndex+I,k[Q]=z[A],z[A].virtualIndex=Q}reflow(k=!1){let{columnsCount:q}=this;if(k&&q===1)return;let{container:H,marker:I}=this,J=H.children,z=J.length-1,K=z-1,A=Array(z),D=-1,Q=k;I.style.order=String(z);for(let F=0,O,T=0,W=0,N;F<z;F++){if(O=J[F],q===1){O.style.removeProperty("transform"),O.style.removeProperty("order");continue}if(F%q===0&&(W=T),Q){let V=this.getCachedScaledFramePosition(O,F,z);if(V)N=V,A[N.virtualIndex]=N;else{Q=!1;let X=F-F%q;for(let S=X,Y;S<F;S++)Y=J[S],N=this.getFramePositionAndCache(Y,S,W),A[S]=N}}if(Q)T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom);else if(N=this.getFramePositionAndCache(O,F,W),A[F]=N,F>=q&&((F+1)%q===0||F===K)){let V=F-F%q,X=F;this.balanceRow(A,V,X);for(let S=V;S<=X;S++){N=A[S],O=J[N.realIndex],O.style.order=String(N.virtualIndex);let Y=A[S-q],Z=W-Y.virtualBottom;if(Z!==0){let w=Z*100/N.height*-1;O.style.transform=`translateY(${w}%)`,N.virtualBottom-=Z}else O.style.removeProperty("transform");T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom)}}else F<q&&(O.style.order=String(F),O.style.removeProperty("transform"),O.style.removeProperty("order"),T=Math.max(T,N.realBottom),D=Math.max(D,N.virtualBottom))}D===-1?(H.style.removeProperty("height"),this.containerAspectRatio=-1):(H.style.height=`${D}px`,this.containerAspectRatio=D/this.containerWidth)}destroy(){super.destroy(),this.bufferA.length=0,this.bufferB.length=0}}window.BalancedMasonryGrid=_;
 
     </script>
-    <script>
-      // Initialize BalancedMasonryGrid only if viewport width > 600px
-      (function () {
-        var grid = null;
-        var container = null;
-
-        function measureAndSetAspectRatios() {
-          var cards = document.querySelectorAll(".review-card");
-          cards.forEach(function (card) {
-            var width = card.offsetWidth || 450;
-            var height = card.scrollHeight || card.offsetHeight;
-            card.style.setProperty("--width", width);
-            card.style.setProperty("--height", height);
-          });
-        }
-
-        function initMasonry() {
-          container = document.querySelector(".reviews-container");
-          if (!container) return;
-
-          if (window.innerWidth > 600) {
-            if (!grid) {
-              // Add masonry classes
-              container.classList.add("masonry-grid", "masonry-hidden");
-
-              // Measure cards and set aspect ratios
-              measureAndSetAspectRatios();
-
-              // Initialize BalancedMasonryGrid
-              grid = new BalancedMasonryGrid(container);
-
-              // Show the grid after initialization
-              container.classList.remove("masonry-hidden");
-            }
-          } else {
-            if (grid) {
-              grid.destroy();
-              grid = null;
-              container.classList.remove("masonry-grid", "masonry-hidden");
-              // Reset aspect-ratio on mobile
-              var cards = document.querySelectorAll(".review-card");
-              cards.forEach(function (card) {
-                card.style.removeProperty("--width");
-                card.style.removeProperty("--height");
-              });
-            }
-          }
-        }
-
-        // Initialize on load
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", initMasonry);
-        } else {
-          initMasonry();
-        }
-
-        // Re-initialize on resize (debounced)
-        var resizeTimeout;
-        window.addEventListener("resize", function () {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(initMasonry, 150);
-        });
-      })();
-    </script>
   </head>
   <body>
     <div class="reviews-container">
@@ -2105,7 +2041,9 @@ Highly recommend bouncy castle hire bexley for all your children's parties ï¿½ï¿
       </div>
     </div>
     <script>
-      /*!
+      // Store iframe-resizer script to execute after masonry
+      window.__iframeResizerInit = function() {
+        /*!
  *  @preserve
  *  
  *  @module      iframe-resizer/child 5.5.7 (umd) - 2025-09-23
@@ -2169,6 +2107,87 @@ window.iframeResizer = {
 `,a),ne()}),r}(e),K=X.size>0,typeof Set.prototype.symmetricDifference==="function"&&(Wt=X.symmetricDifference(nn).size>0),nn=X}function ko(){switch(on(),!0){case!Wt:return;case X.size>1:f("Overflowed Elements:",X);break;case K:break;default:f("No overflow detected")}L("overflowObserver","Overflow updated")}function jo(e){let n={root:document.documentElement,side:D?"bottom":"right"};return T=eo(ko,n),T.attachObservers(e),T}function To(e){if(!Array.isArray(e)||e.length===0)return;let n=e[0].target;L("resizeObserver",`Element resized <${function(r){switch(!0){case!te(r):return"";case te(r.id):return`${r.nodeName}#${r.id}`;case te(r.name):return`${r.nodeName} (${r.name}`;case te(r.className):return`${r.nodeName}.${r.className}`;default:return r.nodeName}}(n)}>`)}function xo(e){return ue=new ResizeObserver(To),ue.observe(document.body),Me.add(document.body),f("Attached ResizeObserver to body"),v={attachObserverToNonStaticElements:so,detachObservers:Lt(de,ue,Me,ro),disconnect:()=>{ue.disconnect(),f("Detached ResizeObserver")}},v.attachObserverToNonStaticElements(e),v}function Ao(e){Vt=!e,L("visibilityObserver","Visibility changed")}let rn=(e)=>{let n=new Set;for(let r of e){n.add(r);for(let a of bt(r))n.add(a)}return f(`Inspecting:
 `,n),n},No=(e)=>{if(e.size===0)return;S("addObservers");let n=rn(e);T.attachObservers(n),v.attachObserverToNonStaticElements(n),ne()},Ro=(e)=>{if(e.size===0)return;S("removeObservers");let n=rn(e);T.detachObservers(n),v.detachObservers(n),ne()};function Co(e){(function({addedNodes:n,removedNodes:r}){S("contentMutated"),Yt(),Jt(),on(),ne(),Ro(r),No(n)})(e),L("mutationObserver","Mutation Observed")}function Io(){let e=bt(document.documentElement);var n;n=[Jn(Co),jo(e),no(),xo(e),co(Ao)],u.push(...n.map((r)=>r.disconnect))}function Ce(e){performance.mark(Ke);let n=Tt(e),r=1,a=document.documentElement,c=fe?0:document.documentElement.getBoundingClientRect().bottom,l=fe?ft:K?Array.from(X):bt(document.documentElement);for(let g of l)r=g.getBoundingClientRect()[e]+parseFloat(getComputedStyle(g).getPropertyValue(`margin-${e}`)),r>c&&(c=r,a=g);return f(`${n} position calculated from:`,a),f(`Checked %c${l.length}%c elements`,N,De),performance.mark(Oe,{detail:{hasTags:fe,len:l.length,logging:xe,Side:n}}),c}let Ie=(e)=>[e.bodyOffset(),e.bodyScroll(),e.documentElementOffset(),e.documentElementScroll(),e.boundingClientRect()],Po=`* ${Array.from(Ot).map((e)=>`:not(${e})`).join("")}`,bt=(e)=>e.querySelectorAll(Po),Pe={height:0,width:0},ie={height:0,width:0},J=[N,De,N];function an(e){function n(){return ie[a]=c,Pe[a]=w,Math.max(c,1)}let r=e===P,a=e.label,c=e.boundingClientRect(),l=Math.ceil(c),g=Math.floor(c),w=((q)=>q.documentElementScroll()+Math.max(0,q.getOffset()))(e),j=`HTML: %c${c}px %cPage: %c${w}px`,p=1;switch(!0){case!e.enabled():return Math.max(w,1);case fe:f("Found element with data-iframe-size attribute"),p=e.taggedElement();break;case(!K&&Te&&ie[a]===0&&Pe[a]===0):f(`Initial page size values: ${j}`,...J),p=n();break;case(Ae&&c===ie[a]&&w===Pe[a]):f(`Size unchanged: ${j}`,...J),p=Math.max(c,w);break;case(c===0&&w!==0):f(`Page is hidden: ${j}`,...J),p=w;break;case(!K&&c!==ie[a]&&w<=Pe[a]):f(`New <html> size: ${j} `,...J),f(`Previous <html> size: %c${ie[a]}px`,N),p=n();break;case!r:p=e.taggedElement();break;case(!K&&c<ie[a]):f(`<html> size decreased: ${j}`,...J),p=n();break;case(w===g||w===l):f(`<html> size equals page size: ${j}`,...J),p=n();break;case c>w:f(`Page size < <html> size: ${j}`,...J),p=n();break;case K:f("Found elements possibly overflowing <html> "),p=e.taggedElement();break;default:f(`Using <html> size: ${j}`,...J),p=n()}return f(`Content ${a}: %c${p}px`,N),p+=function(q){let ae=q.getOffset();return ae!==0&&f(`Page offsetSize: %c${ae}px`,N),ae}(e),Math.max(p,1)}let P={label:"height",enabled:()=>D,getOffset:()=>Z,auto:()=>an(P),bodyOffset:()=>{let{body:e}=document,n=getComputedStyle(e);return e.offsetHeight+parseInt(n.marginTop,10)+parseInt(n.marginBottom,10)},bodyScroll:()=>document.body.scrollHeight,offset:()=>P.bodyOffset(),custom:()=>t.height(),documentElementOffset:()=>document.documentElement.offsetHeight,documentElementScroll:()=>document.documentElement.scrollHeight,boundingClientRect:()=>Math.max(document.documentElement.getBoundingClientRect().bottom,document.body.getBoundingClientRect().bottom),max:()=>Math.max(...Ie(P)),min:()=>Math.min(...Ie(P)),grow:()=>P.max(),lowestElement:()=>Ce("bottom"),taggedElement:()=>Ce("bottom")},F={label:"width",enabled:()=>U,getOffset:()=>G,auto:()=>an(F),bodyScroll:()=>document.body.scrollWidth,bodyOffset:()=>document.body.offsetWidth,custom:()=>t.width(),documentElementScroll:()=>document.documentElement.scrollWidth,documentElementOffset:()=>document.documentElement.offsetWidth,boundingClientRect:()=>Math.max(document.documentElement.getBoundingClientRect().right,document.body.getBoundingClientRect().right),max:()=>Math.max(...Ie(F)),min:()=>Math.min(...Ie(F)),rightMostElement:()=>Ce("right"),scroll:()=>Math.max(F.bodyScroll(),F.documentElementScroll()),taggedElement:()=>Ce("right")},sn=(e,n)=>!(Math.abs(e-n)<=mt);function cn(e,n){let r=e[n](),a=e.enabled()&&x!==void 0?function(c){let l=x(c);if(l===void 0)throw TypeError("No value returned from onBeforeResize(), expected a numeric value");if(Number.isNaN(l))throw TypeError(`Invalid value returned from onBeforeResize(): ${l}, expected Number`);if(l<1)throw RangeError(`Out of range value returned from onBeforeResize(): ${l}, must be at least 1`);return l}(r):r;return jn(a>=1,`New iframe ${e.label} is too small: ${a}, must be at least 1`),a}let Le=!1,Lo=jt(()=>O(ee(4))),ln,zt=!1,L=Ve((e,n,r,a,c)=>{switch(S(e),!0){case Vt===!0:if(zt===!0)break;zt=!0,Le=!1,cancelAnimationFrame(ln);break;case(Le===!0&&e!=="overflowObserver"):we();break;case(!s&&!(e in Sn)):f("Resizing disabled");break;default:zt=!1,Le=!0,performance.now(),ln=requestAnimationFrame(()=>{Le=!1,S("requestAnimationFrame")}),function(l,g,w,j,p){let q=w??cn(P,k),ae=j??cn(F,C);switch(D&&sn(me,q)||U&&sn(ge,ae)?St:l){case"init":case"autoResizeEnabled":case St:me=q,ge=ae;case"setOffsetSize":un(me,ge,l,p);break;case"overflowObserver":case"mutationObserver":case"resizeObserver":case"visibilityObserver":we();break;default:we(),f("No change in content size detected")}}(e,0,r,a,c)}ne()});function dn(e){me=P[k](),ge=F[C](),$(me,ge,e)}function un(e,n,r,a,c){z<-1||(c!==void 0||(c=he),function(){let l=`${pe}:${e}:${n}:${r}${a===void 0?"":`:${a}`}`;if(dt)try{window.parent.iframeParentListener("[iFrameSizer]"+l)}catch(g){if(z!==1)throw g;return void Lo()}else Zt.postMessage("[iFrameSizer]"+l,c);f(`Sending message to parent page via ${dt?"sameOrigin":"postMessage"}: %c%c${l}`,"font-style: italic;",N)}())}let $=Ve((e,n,r,a,c)=>{S(r),un(e,n,r,a,c),ne()}),fn=Ve(function(e){S("onMessage");let{freeze:n}=Object,{parse:r}=JSON,a=(p)=>$(0,0,`${p}Stop`),c={init:function(){if(document.readyState==="loading")return;let p=e.data.slice(13).split(":");Zt=e.source,M=e.origin,lo(p),Te=!1,setTimeout(()=>{Ht=!1},128)},reset(){Ht||dn("resetPage")},resize(){L("parentResize","Parent window requested size check")},moveToAnchor(){re.findTarget(g())},inPageLink(){this.moveToAnchor()},pageInfo(){let p=g();Ne?ve(Ne,r(p)):a("pageInfo")},parentInfo(){let p=(q=g(),n(r(q)));var q;Re?ve(Re,p):a("parentInfo")},message(){let p=g();ve(ht,r(p))}},l=()=>e.data.split("]")[1].split(":")[0],g=()=>e.data.slice(e.data.indexOf(":")+1),w=()=>(e.data.split(":")[2]in{true:1,false:1});function j(){let p=l();S(p),p in c?c[p]():("iframeResize"in window)||window.jQuery!==void 0&&(""in window.jQuery.prototype)||w()||H(`Unexpected message (${e.data})`)}`${e.data}`.slice(0,13)==="[iFrameSizer]"&&function(){if(Te!==!1)return w()?(Tn(l()),S("init"),void c.init()):void 0;j()}()}),mn=!1,pn=(e)=>e.postMessage("[iFrameResizerChild]Ready",window?.iframeResizer?.targetOrigin||"*");function hn(){if(document.readyState==="loading"||!Te||mn)return;let{parent:e,top:n}=window;S("ready"),pn(e),e!==n&&pn(n),mn=!0}"iframeChildListener"in window?H("Already setup"):(window.iframeChildListener=(e)=>setTimeout(()=>fn({data:e,sameOrigin:!0})),W(window,"message",fn),W(document,"readystatechange",hn),hn())}()});
 
+      };
+    </script>
+    <script>
+      // Initialize BalancedMasonryGrid only if viewport width > 600px
+      // Then initialize iframe-resizer AFTER masonry completes
+      (function () {
+        var grid = null;
+        var container = null;
+        var iframeResizerInitialized = false;
+
+        function initIframeResizer() {
+          if (!iframeResizerInitialized && window.__iframeResizerInit) {
+            iframeResizerInitialized = true;
+            window.__iframeResizerInit();
+          }
+        }
+
+        function measureAndSetAspectRatios() {
+          var cards = document.querySelectorAll(".review-card");
+          cards.forEach(function (card) {
+            var width = card.offsetWidth || 450;
+            var height = card.scrollHeight || card.offsetHeight;
+            card.style.setProperty("--width", width);
+            card.style.setProperty("--height", height);
+          });
+        }
+
+        function initMasonry() {
+          container = document.querySelector(".reviews-container");
+          if (!container) {
+            // No container, just init iframe-resizer
+            initIframeResizer();
+            return;
+          }
+
+          if (window.innerWidth > 600) {
+            if (!grid) {
+              // Add masonry classes
+              container.classList.add("masonry-grid", "masonry-hidden");
+
+              // Measure cards and set aspect ratios
+              measureAndSetAspectRatios();
+
+              // Initialize BalancedMasonryGrid
+              grid = new BalancedMasonryGrid(container);
+
+              // Show the grid after initialization
+              container.classList.remove("masonry-hidden");
+            }
+          } else {
+            if (grid) {
+              grid.destroy();
+              grid = null;
+              container.classList.remove("masonry-grid", "masonry-hidden");
+              // Reset aspect-ratio on mobile
+              var cards = document.querySelectorAll(".review-card");
+              cards.forEach(function (card) {
+                card.style.removeProperty("--width");
+                card.style.removeProperty("--height");
+              });
+            }
+          }
+
+          // Initialize iframe-resizer AFTER masonry is done
+          initIframeResizer();
+        }
+
+        // Initialize on load
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", initMasonry);
+        } else {
+          initMasonry();
+        }
+
+        // Re-initialize on resize (debounced)
+        var resizeTimeout;
+        window.addEventListener("resize", function () {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(initMasonry, 150);
+        });
+      })();
     </script>
   </body>
 </html>

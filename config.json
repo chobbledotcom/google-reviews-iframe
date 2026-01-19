@@ -25,7 +25,8 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
-    "last_fetched": "2026-01-12 09:27:21"
+    "last_fetched": "2026-01-12 09:27:21",
+    "last_fetched_google": "2026-01-19 09:32:05"
   },
   {
     "google_business_id": "ChIJIWHoXXd4eUgRaHK1UdGosls",

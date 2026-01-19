@@ -7,10 +7,11 @@ import iframeResize from "@iframe-resizer/parent";
 
 /**
  * Auto-initialize iFrame Resizer for Reviews embeds
- * Automatically resizes any iframe with class "google-reviews-iframe"
+ * Supports .reviews-iframe (current) and .google-reviews-iframe (deprecated)
  */
 function initReviewsIframes() {
-  const iframes = document.querySelectorAll(".google-reviews-iframe");
+  const selector = ".reviews-iframe, .google-reviews-iframe";
+  const iframes = document.querySelectorAll(selector);
   if (iframes.length === 0) {
     return;
   }
@@ -21,7 +22,7 @@ function initReviewsIframes() {
       checkOrigin: false,
       license: "GPLv3",
     },
-    ".google-reviews-iframe",
+    selector,
   );
 }
 

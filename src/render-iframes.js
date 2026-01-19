@@ -197,7 +197,7 @@ function generateEmbedCode(businessSlug, source = "google") {
   return `<!-- ${sourceLabel} Reviews Embed Code for ${businessSlug} -->
 <script async defer src="https://reviews-embeds.chobble.com/js"></script>
 <iframe
-  class="${source}-reviews-iframe"
+  class="reviews-iframe"
   src="${iframeUrl}"
   style="width: 100%; height: 1500px; margin: 2rem 0; padding:0; border: none; overflow: scroll; background: transparent;"
   scrolling="yes"

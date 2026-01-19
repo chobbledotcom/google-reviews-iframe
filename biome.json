@@ -1,0 +1,23 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+  "extends": [
+    "./lib/chobble-template/packages/js-toolkit/configs/biome.base.json"
+  ],
+  "files": {
+    "includes": [
+      "**/*.js",
+      "!lib",
+      "!node_modules",
+      "!masonry.pkgd.min.js",
+      "!iframe-resizer.child.js",
+      "!reviews-embed.js"
+    ]
+  },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noConsole": "off"
+      }
+    }
+  }
+}

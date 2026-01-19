@@ -11,7 +11,12 @@ const verbose = process.argv.includes("--verbose");
 const rootDir = process.cwd();
 
 // Steps to run for precommit
-const steps = [COMMON_STEPS.install, COMMON_STEPS.lintFix, COMMON_STEPS.cpd];
+const steps = [
+  COMMON_STEPS.install,
+  COMMON_STEPS.lintFix,
+  COMMON_STEPS.cpd,
+  COMMON_STEPS.test,
+];
 
 console.log(
   verbose

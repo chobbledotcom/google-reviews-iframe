@@ -134,10 +134,7 @@ function downloadAndProcessImage(url, userId) {
 
     request.on("error", async (err) => {
       // Fallback to curl on DNS errors
-      if (
-        err.code === "EAI_AGAIN" ||
-        (err.message && err.message.includes("EAI_AGAIN"))
-      ) {
+      if (err.code === "EAI_AGAIN" || err.message?.includes("EAI_AGAIN")) {
         const result = await downloadImageWithCurl(url, filepath1x, filepath2x);
         resolve(result);
       } else {
@@ -159,7 +156,7 @@ function formatFilename(name, date) {
     .replace(/\s+/g, "-")
     .substring(0, 30);
   const safeDate =
-    date instanceof Date && !isNaN(date)
+    date instanceof Date && !Number.isNaN(date.getTime())
       ? date.toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
   return `${safeName}-${safeDate}.json`;
@@ -178,7 +175,7 @@ function getLatestReviewDate(businessDir) {
       const content = fs.readFileSync(path.join(businessDir, file), "utf8");
       const review = JSON.parse(content);
       const date = new Date(review.date);
-      if (!isNaN(date)) {
+      if (!Number.isNaN(date.getTime())) {
         reviewDates.push(date);
       }
     } catch (error) {

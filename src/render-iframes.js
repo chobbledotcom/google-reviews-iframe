@@ -210,7 +210,7 @@ function generateEmbedCode(businessSlug) {
 <iframe
   class="reviews-iframe"
   src="${iframeUrl}"
-  style="width: 100%; height: 1500px; margin: 2rem 0; padding:0; border: none; overflow: scroll; background: transparent;"
+  style="width: 100%; height: 1500px; margin: 2rem 0; padding:0; border: none; overflow: scroll; background: transparent; contain: strict;"
   scrolling="yes"
   frameborder="0"
   sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"

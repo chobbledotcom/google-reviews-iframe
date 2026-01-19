@@ -8,8 +8,8 @@
     "#toolkit/*": "./lib/chobble-template/packages/js-toolkit/*"
   },
   "scripts": {
-    "fetch": "node fetch-google-reviews.js",
-    "render": "node render-iframes.js",
+    "fetch": "bun fetch-google-reviews.js",
+    "render": "bun render-iframes.js",
     "lint": "bunx @biomejs/biome check --error-on-warnings .",
     "lint:fix": "bunx @biomejs/biome check --write .",
     "cpd": "jscpd",

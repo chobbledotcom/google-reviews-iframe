@@ -32,14 +32,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '18'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Fetch Google Reviews
         if: ${{ github.event.inputs.source != 'facebook' }}
@@ -47,9 +48,9 @@ jobs:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            node fetch-google-reviews.js "${{ github.event.inputs.business_slug }}"
+            bun fetch-google-reviews.js "${{ github.event.inputs.business_slug }}"
           else
-            node fetch-google-reviews.js
+            bun fetch-google-reviews.js
           fi
 
       - name: Fetch Facebook Reviews
@@ -58,17 +59,17 @@ jobs:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            node fetch-facebook-reviews.js "${{ github.event.inputs.business_slug }}"
+            bun fetch-facebook-reviews.js "${{ github.event.inputs.business_slug }}"
           else
-            node fetch-facebook-reviews.js
+            bun fetch-facebook-reviews.js
           fi
 
       - name: Render iframes
         run: |
           if [ -n "${{ github.event.inputs.business_slug }}" ]; then
-            node render-iframes.js "${{ github.event.inputs.business_slug }}"
+            bun render-iframes.js "${{ github.event.inputs.business_slug }}"
           else
-            node render-iframes.js
+            bun render-iframes.js
           fi
 
       - name: Check for changes

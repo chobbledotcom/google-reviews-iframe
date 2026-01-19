@@ -3,20 +3,23 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Fetch Google reviews and generate static iframe displays",
-  "main": "fetch-google-reviews.js",
+  "main": "src/fetch-google-reviews.js",
   "imports": {
     "#toolkit/*": "./lib/chobble-template/packages/js-toolkit/*"
   },
   "scripts": {
-    "fetch": "bun fetch-google-reviews.js",
-    "render": "bun render-iframes.js",
+    "build": "bun src/build.js",
+    "fetch": "bun src/fetch-google-reviews.js",
+    "fetch:facebook": "bun src/fetch-facebook-reviews.js",
+    "render": "bun src/render-iframes.js",
     "lint": "bunx @biomejs/biome check --error-on-warnings .",
     "lint:fix": "bunx @biomejs/biome check --write .",
     "cpd": "jscpd",
-    "precommit": "bun scripts/precommit.js"
+    "precommit": "bun src/scripts/precommit.js"
   },
   "dependencies": {
-    "iframe-resizer": "^5.5.7",
+    "@iframe-resizer/child": "^5.5.7",
+    "@iframe-resizer/parent": "^5.5.7",
     "sharp": "^0.33.2"
   },
   "devDependencies": {

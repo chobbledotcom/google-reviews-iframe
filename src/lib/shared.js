@@ -1,24 +1,25 @@
-import fs from "node:fs";
-import path from "node:path";
-import https from "node:https";
-import http from "node:http";
 import { execSync } from "node:child_process";
+import fs from "node:fs";
+import http from "node:http";
+import https from "node:https";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { pipe, filter } from "#toolkit/fp/index.js";
+import { filter, pipe } from "#toolkit/fp/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.join(__dirname, "..", "..");
 
 const CONFIG = {
-  configPath: path.join(__dirname, "..", "config.json"),
-  reviewsDir: path.join(__dirname, "..", "reviews"),
-  imagesDir: path.join(__dirname, "..", "images", "reviewers"),
+  configPath: path.join(rootDir, "config.json"),
+  reviewsDir: path.join(rootDir, "data"),
+  imagesDir: path.join(rootDir, "images", "reviewers"),
   maxReviews: 9999,
 };
 
 // Load environment variables from .env file
 function loadEnv() {
-  const envPath = path.join(__dirname, "..", ".env");
+  const envPath = path.join(rootDir, ".env");
   if (fs.existsSync(envPath)) {
     const lines = fs.readFileSync(envPath, "utf8").split("\n");
     for (const line of lines) {

@@ -27,9 +27,32 @@ const normalizeReview = (review) => {
   const rating = Number.parseInt(review.ratingValue, 10) || 0;
 
   // Combine title and text if both exist
-  const content = review.reviewTitle
-    ? `${review.reviewTitle}\n\n${review.reviewText || ""}`
-    : review.reviewText || "";
+  let content;
+  if (review.reviewTitle) {
+    let title = review.reviewTitle.trim();
+    const body = review.reviewText || "";
+
+    // Check if body already starts with title (avoids duplication)
+    // Also handle Trustpilot's ellipsis truncation (e.g., "Great service…" or "Great service...")
+    const ellipsisMatch = title.match(/^(.+?)(\.{3}|…\.?)$/);
+    const titlePrefix = ellipsisMatch ? ellipsisMatch[1].trim() : null;
+
+    if (body.toLowerCase().startsWith(title.toLowerCase())) {
+      // Exact match - body starts with full title
+      content = body;
+    } else if (titlePrefix && body.toLowerCase().startsWith(titlePrefix.toLowerCase())) {
+      // Title was truncated with ellipsis, body contains the full text
+      content = body;
+    } else {
+      // Add period to title if it doesn't end with sentence punctuation
+      if (!/[.!?]$/.test(title)) {
+        title = `${title}.`;
+      }
+      content = `${title}\n\n${body}`;
+    }
+  } else {
+    content = review.reviewText || "";
+  }
 
   return {
     content: content.trim(),

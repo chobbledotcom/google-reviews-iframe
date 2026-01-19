@@ -15,7 +15,8 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
-    "last_fetched_google": "2026-01-16 10:34:42"
+    "last_fetched_google": "2026-01-16 10:34:42",
+    "last_fetched_facebook": "2026-01-19 01:40:50"
   },
   {
     "source": "google",

@@ -27,21 +27,13 @@
     "last_fetched": "2026-01-12 09:27:21"
   },
   {
-    "source": "google",
     "google_business_id": "ChIJIWHoXXd4eUgRaHK1UdGosls",
+    "facebook_page_url": "https://www.facebook.com/DB.Entertainment.ltd",
     "slug": "db-entertainment",
     "number_of_reviews": -1,
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
-    "last_fetched": "2026-01-19 00:52:52"
-  },
-  {
-    "source": "facebook",
-    "facebook_page_url": "https://www.facebook.com/DB.Entertainment.ltd",
-    "slug": "db-entertainment-facebook",
-    "number_of_reviews": -1,
-    "minimum_star_rating": 0,
-    "fetch_frequency_days": 7,
-    "last_fetched": "2026-01-19 01:17:39"
+    "last_fetched_google": "2026-01-19 00:52:52",
+    "last_fetched_facebook": "2026-01-19 01:17:39"
   }
 ]

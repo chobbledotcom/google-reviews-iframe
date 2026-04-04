@@ -31,26 +31,13 @@ const CARD_CHROME_HEIGHT =
   BORDER_WIDTH;
 
 /**
- * Estimate text height using character count (fallback when pretext fails).
- */
-function estimateTextHeight(text, contentWidth) {
-  const charsPerLine = Math.max(1, Math.floor(contentWidth / 7));
-  const lineCount = Math.max(1, Math.ceil(text.length / charsPerLine));
-  return lineCount * CONTENT_LINE_HEIGHT;
-}
-
-/**
- * Predict text height using pretext font metrics, with fallback.
+ * Predict text height using pretext font metrics.
  * Ported from pretext-masonry/src/heightPredictor.ts
  */
 function predictTextHeight(text, contentWidth) {
-  try {
-    const prepared = prepare(text, CONTENT_FONT);
-    const result = layout(prepared, contentWidth, CONTENT_LINE_HEIGHT);
-    return result.height;
-  } catch {
-    return estimateTextHeight(text, contentWidth);
-  }
+  const prepared = prepare(text, CONTENT_FONT);
+  const result = layout(prepared, contentWidth, CONTENT_LINE_HEIGHT);
+  return result.height;
 }
 
 /**

@@ -27,32 +27,22 @@
         margin: 0 auto;
       }
 
-      /* Mobile: show single column, hide desktop */
-      .mobile-reviews {
-        display: block;
+      /* Masonry container: relative positioning for absolute children */
+      .masonry-container {
+        position: relative;
+        width: 100%;
       }
 
-      .desktop-reviews {
-        display: none;
+      /* Cards use absolute positioning with GPU-accelerated transforms.
+         Hidden until masonry JS computes positions to prevent CLS. */
+      .masonry-container .review-card {
+        position: absolute;
+        will-change: transform;
+        visibility: hidden;
       }
 
-      /* Desktop: hide mobile, show two columns */
-      @media (min-width: 601px) {
-        .mobile-reviews {
-          display: none;
-        }
-
-        .desktop-reviews {
-          display: flex;
-          gap: 20px;
-          align-items: flex-start;
-        }
-
-        .reviews-column {
-          flex: 1 1 calc(50% - 10px);
-          min-width: 0;
-          max-width: calc(50% - 10px);
-        }
+      .masonry-container.masonry-ready .review-card {
+        visibility: visible;
       }
 
       .review-card {
@@ -61,13 +51,8 @@
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border: 1px solid #e1e5e9;
-        margin-bottom: 20px;
         /* Performance: isolate each card's layout/paint from affecting others */
         contain: layout paint style;
-        /* Skip rendering for off-screen cards - major perf win for large lists 
-        content-visibility: auto; */
-        /* Estimated height hint for off-screen cards (prevents scroll jumpiness) */
-        contain-intrinsic-size: auto 250px;
       }
 
       @media (max-device-width: 600px) {
@@ -78,7 +63,6 @@
         .review-card {
           padding: 10px;
           box-shadow: none;
-          margin-bottom: 15px;
         }
       }
 
@@ -202,6 +186,81 @@
   </head>
   <body>
     <div class="reviews-container">{{REVIEWS_HTML}}</div>
+    <script>
+      // Masonry layout: greedy shortest-column with absolute positioning.
+      // Bypasses DOM reflowing by batch-reading heights, then batch-writing transforms.
+      // Based on pretext-masonry (github.com/ShipItAndPray/pretext-masonry).
+      (function () {
+        var GAP = 20;
+        var MOBILE_BREAKPOINT = 601;
+
+        function layoutMasonry() {
+          var container = document.querySelector(".masonry-container");
+          if (!container) return;
+
+          var cards = container.children;
+          if (!cards.length) return;
+
+          var containerWidth = container.offsetWidth;
+          var colCount =
+            containerWidth >= MOBILE_BREAKPOINT
+              ? Math.max(2, Math.floor((containerWidth + GAP) / (280 + GAP)))
+              : 1;
+          var colWidth = (containerWidth - GAP * (colCount - 1)) / colCount;
+
+          // Batch read: measure all card heights in one pass (single reflow)
+          var heights = new Array(cards.length);
+          for (var i = 0; i < cards.length; i++) {
+            cards[i].style.width = colWidth + "px";
+            cards[i].style.transform = "";
+          }
+          for (var i = 0; i < cards.length; i++) {
+            heights[i] = cards[i].offsetHeight;
+          }
+
+          // Compute positions using greedy shortest-column algorithm
+          var colHeights = new Float64Array(colCount);
+          var positions = new Array(cards.length);
+
+          for (var i = 0; i < cards.length; i++) {
+            var shortest = 0;
+            for (var c = 1; c < colCount; c++) {
+              if (colHeights[c] < colHeights[shortest]) shortest = c;
+            }
+            positions[i] = {
+              x: shortest * (colWidth + GAP),
+              y: colHeights[shortest],
+            };
+            colHeights[shortest] += heights[i] + GAP;
+          }
+
+          // Total height is the tallest column minus trailing gap
+          var maxH = 0;
+          for (var c = 0; c < colCount; c++) {
+            if (colHeights[c] > maxH) maxH = colHeights[c];
+          }
+          var totalHeight = maxH > 0 ? maxH - GAP : 0;
+
+          // Batch write: set all positions in one pass (single paint)
+          for (var i = 0; i < cards.length; i++) {
+            cards[i].style.transform =
+              "translate(" + positions[i].x + "px," + positions[i].y + "px)";
+          }
+          container.style.height = totalHeight + "px";
+          container.classList.add("masonry-ready");
+        }
+
+        // Run layout once DOM is ready
+        layoutMasonry();
+
+        // Debounced re-layout on resize
+        var resizeTimer;
+        window.addEventListener("resize", function () {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(layoutMasonry, 100);
+        });
+      })();
+    </script>
     <script>
       {{IFRAME_RESIZER_SCRIPT}}
     </script>

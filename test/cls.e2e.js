@@ -6,9 +6,9 @@ import { expect, test } from "@playwright/test";
  * These tests measure layout shift in the iframe content using the
  * PerformanceObserver API to capture layout-shift entries.
  *
- * With the new CSS-only two-column layout (no JavaScript masonry),
- * CLS should be zero or near-zero since layout is determined at
- * render time without any JavaScript manipulation.
+ * With the masonry layout (greedy shortest-column with absolute positioning),
+ * CLS should be zero or near-zero since cards are hidden until positions
+ * are computed, then revealed in their final positions.
  */
 
 // Helper to wait for iframe to resize above minimum height

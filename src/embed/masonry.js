@@ -22,13 +22,13 @@ const CARD_PADDING = 20;
 const CARD_PADDING_SIDE = 20;
 const HEADER_HEIGHT = 48; // .review-header height
 const HEADER_MARGIN_BOTTOM = 15;
-const BORDER_WIDTH = 2; // 1px top + 1px bottom
+const BORDER_WIDTH = 1; // 1px solid border on all sides
 const CARD_CHROME_HEIGHT =
   CARD_PADDING +
   HEADER_HEIGHT +
   HEADER_MARGIN_BOTTOM +
   CARD_PADDING +
-  BORDER_WIDTH;
+  BORDER_WIDTH * 2; // top + bottom border
 
 /**
  * Predict text height using pretext font metrics.
@@ -44,7 +44,7 @@ function predictTextHeight(text, contentWidth) {
  * Predict a single card's height using pretext font metrics.
  */
 function predictCardHeight(textContent, availableWidth) {
-  const contentWidth = availableWidth - CARD_PADDING_SIDE * 2;
+  const contentWidth = availableWidth - CARD_PADDING_SIDE * 2 - BORDER_WIDTH * 2; // left + right border
   let totalHeight = CARD_CHROME_HEIGHT;
 
   if (textContent?.trim()) {

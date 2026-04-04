@@ -21,6 +21,7 @@
     "test:e2e:debug": "bunx playwright test --debug"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.4",
     "@iframe-resizer/child": "^5.5.7",
     "@iframe-resizer/parent": "^5.5.7",
     "sharp": "^0.33.2"

@@ -96,11 +96,6 @@ function renderRating(review) {
   return renderStars(review.rating);
 }
 
-function countWords(text) {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
-
 function renderReviewCard(review) {
   const initials = getInitials(review.author);
   const authorLink = review.authorUrl
@@ -131,53 +126,17 @@ function renderReviewCard(review) {
     `;
 }
 
-// Determine which column to add a review to based on word count balance
-function shouldAddToLeft(leftWordCount, rightWordCount, index) {
-  // If right column is 20+ words longer, add to left
-  if (rightWordCount - leftWordCount >= 20) return true;
-  // If left column is 20+ words longer, add to right
-  if (leftWordCount - rightWordCount >= 20) return false;
-  // Otherwise alternate starting with left
-  return index % 2 === 0;
-}
-
 function generateReviewsHtml(reviews) {
   if (!reviews || reviews.length === 0) {
     return '<div class="no-reviews">No reviews available.</div>';
   }
 
-  // Generate mobile layout (single column, all reviews in order)
-  const mobileHtml = reviews.map(renderReviewCard).join("");
+  // Single set of cards in a masonry container.
+  // Layout is computed client-side by the inline masonry script using
+  // the greedy shortest-column algorithm with absolute positioning.
+  const cardsHtml = reviews.map(renderReviewCard).join("");
 
-  // Generate desktop layout (two columns, balanced by word count)
-  const leftColumn = [];
-  const rightColumn = [];
-  let leftWordCount = 0;
-  let rightWordCount = 0;
-
-  for (let i = 0; i < reviews.length; i++) {
-    const review = reviews[i];
-    const reviewWords = Math.max(0, countWords(review.content) - 25);
-    const reviewHtml = renderReviewCard(review);
-
-    if (shouldAddToLeft(leftWordCount, rightWordCount, i)) {
-      leftColumn.push(reviewHtml);
-      leftWordCount += reviewWords;
-    } else {
-      rightColumn.push(reviewHtml);
-      rightWordCount += reviewWords;
-    }
-  }
-
-  const desktopHtml = `
-    <div class="reviews-column reviews-column-left">${leftColumn.join("")}</div>
-    <div class="reviews-column reviews-column-right">${rightColumn.join("")}</div>
-  `;
-
-  return `
-    <div class="mobile-reviews">${mobileHtml}</div>
-    <div class="desktop-reviews">${desktopHtml}</div>
-  `;
+  return `<div class="masonry-container">${cardsHtml}</div>`;
 }
 
 function generateHtml(reviews) {
@@ -188,15 +147,19 @@ function generateHtml(reviews) {
   // Read HTML template
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  // Read bundled iframe resizer child script from dist/
+  // Read bundled scripts from dist/
   const childScriptPath = path.join(rootDir, "dist", "iframe-resizer-child.js");
   const childScript = fs.readFileSync(childScriptPath, "utf8");
+
+  const masonryScriptPath = path.join(rootDir, "dist", "masonry.js");
+  const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
 
   // Generate reviews HTML
   const reviewsHtml = generateReviewsHtml(reviews);
 
   // Replace placeholders
   let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
+  html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
   html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
   return html;

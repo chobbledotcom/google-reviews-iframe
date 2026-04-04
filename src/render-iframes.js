@@ -147,15 +147,19 @@ function generateHtml(reviews) {
   // Read HTML template
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  // Read bundled iframe resizer child script from dist/
+  // Read bundled scripts from dist/
   const childScriptPath = path.join(rootDir, "dist", "iframe-resizer-child.js");
   const childScript = fs.readFileSync(childScriptPath, "utf8");
+
+  const masonryScriptPath = path.join(rootDir, "dist", "masonry.js");
+  const masonryScript = fs.readFileSync(masonryScriptPath, "utf8");
 
   // Generate reviews HTML
   const reviewsHtml = generateReviewsHtml(reviews);
 
   // Replace placeholders
   let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
+  html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
   html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
 
   return html;

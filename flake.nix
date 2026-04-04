@@ -9,7 +9,7 @@
           pkgs = import nixpkgs { system = "x86_64-linux"; };
           npmScripts = pkgs.symlinkJoin {
             name = "npm-scripts";
-            paths = map (cmd: pkgs.writeShellScriptBin cmd "npm run ${cmd}") [
+            paths = map (cmd: pkgs.writeShellScriptBin cmd "bun run ${cmd}") [
               "serve"
               "build"
               "prepare-dev"
@@ -23,7 +23,7 @@
         in
         pkgs.mkShell {
           buildInputs = [
-            pkgs.nodejs_24
+            pkgs.bun
             npmScripts
           ];
           shellHook = ''

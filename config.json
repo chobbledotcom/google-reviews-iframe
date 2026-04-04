@@ -7,7 +7,8 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched": "2026-01-16 10:34:35",
-    "last_fetched_google": "2026-04-01 10:02:32"
+    "last_fetched_google": "2026-04-01 10:02:32",
+    "last_fetched_test-success": "2026-04-04 12:57:56"
   },
   {
     "google_business_id": "ChIJmcuGwN-u2EcRD_yH7dMhpEI",
@@ -18,7 +19,7 @@
     "fetch_frequency_days": 7,
     "last_fetched_google": "2026-04-01 10:02:40",
     "last_fetched_facebook": "2026-04-03 09:48:39",
-    "last_fetched_test-success": "2026-01-19 09:26:40"
+    "last_fetched_test-success": "2026-04-04 12:57:56"
   },
   {
     "source": "google",
@@ -28,7 +29,8 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched": "2026-01-12 09:27:21",
-    "last_fetched_google": "2026-04-03 09:47:39"
+    "last_fetched_google": "2026-04-03 09:47:39",
+    "last_fetched_test-success": "2026-04-04 12:57:56"
   },
   {
     "google_business_id": "ChIJIWHoXXd4eUgRaHK1UdGosls",
@@ -41,6 +43,6 @@
     "last_fetched_google": "2026-04-03 09:47:46",
     "last_fetched_facebook": "2026-03-29 09:32:48",
     "last_fetched_trustpilot": "2026-03-29 09:33:00",
-    "last_fetched_test-success": "2026-01-19 09:26:40"
+    "last_fetched_test-success": "2026-04-04 12:57:56"
   }
 ]

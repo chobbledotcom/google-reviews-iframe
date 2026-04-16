@@ -580,62 +580,113 @@ const extractGoogleUserId = (authorUrl) => {
   return match ? match[1] : null;
 };
 
+// ---------------------------------------------------------------------------
+// Deduplication
+// ---------------------------------------------------------------------------
+
+// Higher number wins when the same review appears on multiple platforms.
+const SOURCE_PRIORITY = {
+  trustpilot: 3,
+  google: 2,
+  facebook: 1,
+};
+
+// Reviews stored before the `source` field existed were all Google.
+const getSourcePriority = (review) =>
+  SOURCE_PRIORITY[review.source] ?? SOURCE_PRIORITY.google;
+
+// Normalise a string for comparison: lowercase, collapse whitespace, trim.
+const normaliseForComparison = (s) =>
+  (s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+// Key used to detect duplicate reviews across sources. Author plus the first
+// 200 normalised characters of content keeps short reviews from colliding
+// across different reviewers while still matching the same review copied
+// from one platform to another.
+const dedupKey = (review) => {
+  const author = normaliseForComparison(review.author);
+  const content = normaliseForComparison(review.content).substring(0, 200);
+  return `${author}|${content}`;
+};
+
+/**
+ * Remove reviews that appear on multiple platforms.
+ *
+ * Priority when the same review exists on more than one platform:
+ *   trustpilot > google > facebook
+ *
+ * Reviews are matched by normalised author + content. Returns a new array;
+ * does not mutate the input or the on-disk files.
+ */
+const deduplicateReviews = (reviews) => {
+  const best = new Map();
+  for (const review of reviews) {
+    const key = dedupKey(review);
+    const current = best.get(key);
+    if (!current || getSourcePriority(review) > getSourcePriority(current)) {
+      best.set(key, review);
+    }
+  }
+  return Array.from(best.values());
+};
+
 export {
-  CONFIG,
-  loadEnv,
-  downloadAndProcessImage,
-  formatFilename,
-  getLatestReviewDate,
-  makeApiRequest,
-  fetchApiArray,
-  saveReview,
-  loadConfig,
-  saveConfig,
-  shouldFetch,
-  updateLastFetched,
-  extractGoogleUserId,
-  // FP-style helpers
-  hasContent,
-  createApifyFetcher,
-  pipe,
-  filter,
-  flatMap,
-  map,
-  filterByPlatform,
-  filterBySlug,
-  ensureBusinessDir,
-  createBusinessProcessor,
-  createReviewFetcher,
   // Business logic helpers
   buildFetchOptions,
-  filterByMinRating,
-  saveReviewsWithCount,
-  processBusinesses,
-  // Pure helpers for testing
-  formatRating,
   buildReviewData,
-  parseUrlSafe,
-  isRedirect,
-  isDnsError,
-  handleApiTimeout,
-  validateArrayResponse,
-  handleApiRequestError,
-  // Internal helpers exported for testing
-  tryDownloadThumbnail,
-  getImagePaths,
-  imageFilesExist,
-  downloadImageWithCurl,
-  makeApiRequestHttps,
-  makeApiRequestCurl,
-  processImageBuffer,
+  CONFIG,
+  checkImagePreconditions,
   collectAndProcessImage,
-  handleImageResponse,
+  createApifyFetcher,
+  createBusinessProcessor,
   createImageErrorHandler,
-  setupTimeout,
-  tryCurlDownload,
   // Additional internal helpers for full coverage
   createResponseHandler,
-  validateImageInputs,
+  createReviewFetcher,
+  deduplicateReviews,
+  downloadAndProcessImage,
+  downloadImageWithCurl,
+  ensureBusinessDir,
+  extractGoogleUserId,
+  fetchApiArray,
+  filter,
+  filterByMinRating,
+  filterByPlatform,
+  filterBySlug,
+  flatMap,
+  formatFilename,
+  // Pure helpers for testing
+  formatRating,
+  getImagePaths,
+  getLatestReviewDate,
   getProtocolModule,
-  checkImagePreconditions,
+  handleApiRequestError,
+  handleApiTimeout,
+  handleImageResponse,
+  // FP-style helpers
+  hasContent,
+  imageFilesExist,
+  isDnsError,
+  isRedirect,
+  loadConfig,
+  loadEnv,
+  makeApiRequest,
+  makeApiRequestCurl,
+  makeApiRequestHttps,
+  map,
+  parseUrlSafe,
+  pipe,
+  processBusinesses,
+  processImageBuffer,
+  saveConfig,
+  saveReview,
+  saveReviewsWithCount,
+  setupTimeout,
+  shouldFetch,
+  tryCurlDownload,
+  // Internal helpers exported for testing
+  tryDownloadThumbnail,
+  updateLastFetched,
+  validateArrayResponse,
+  validateImageInputs,
 };

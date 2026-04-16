@@ -7,6 +7,7 @@ import path from "node:path";
 import { withTempDirAsync } from "#toolkit/test-utils/index.js";
 import {
   buildReviewData,
+  deduplicateReviews,
   extractGoogleUserId,
   filterByPlatform,
   filterBySlug,
@@ -400,5 +401,123 @@ describe("updateLastFetched", () => {
     expect(business.slug).toBe("test");
     expect(business.name).toBe("Test Business");
     expect(business.last_fetched_facebook).toBeDefined();
+  });
+});
+
+describe("deduplicateReviews", () => {
+  const makeReview = (overrides) => ({
+    author: "Jane Doe",
+    content: "Great service, would use again!",
+    date: "2024-01-01T00:00:00.000Z",
+    rating: 5,
+    source: "google",
+    ...overrides,
+  });
+
+  it("returns all reviews when none are duplicates", () => {
+    const reviews = [
+      makeReview({ author: "Alice", content: "First review" }),
+      makeReview({ author: "Bob", content: "Second review" }),
+      makeReview({ author: "Carol", content: "Third review" }),
+    ];
+    expect(deduplicateReviews(reviews).length).toBe(3);
+  });
+
+  it("prefers trustpilot over google for same review", () => {
+    const reviews = [
+      makeReview({ source: "google" }),
+      makeReview({ source: "trustpilot" }),
+    ];
+    const result = deduplicateReviews(reviews);
+    expect(result.length).toBe(1);
+    expect(result[0].source).toBe("trustpilot");
+  });
+
+  it("prefers trustpilot over facebook for same review", () => {
+    const reviews = [
+      makeReview({ source: "facebook" }),
+      makeReview({ source: "trustpilot" }),
+    ];
+    const result = deduplicateReviews(reviews);
+    expect(result.length).toBe(1);
+    expect(result[0].source).toBe("trustpilot");
+  });
+
+  it("prefers google over facebook for same review", () => {
+    const reviews = [
+      makeReview({ source: "facebook" }),
+      makeReview({ source: "google" }),
+    ];
+    const result = deduplicateReviews(reviews);
+    expect(result.length).toBe(1);
+    expect(result[0].source).toBe("google");
+  });
+
+  it("picks the winner regardless of input order", () => {
+    const trustpilot = makeReview({ source: "trustpilot" });
+    const google = makeReview({ source: "google" });
+    const facebook = makeReview({ source: "facebook" });
+
+    expect(deduplicateReviews([trustpilot, google, facebook])[0].source).toBe(
+      "trustpilot",
+    );
+    expect(deduplicateReviews([facebook, google, trustpilot])[0].source).toBe(
+      "trustpilot",
+    );
+    expect(deduplicateReviews([google, trustpilot, facebook])[0].source).toBe(
+      "trustpilot",
+    );
+  });
+
+  it("treats reviews without a source as google (legacy data)", () => {
+    const reviews = [
+      makeReview({ source: undefined }),
+      makeReview({ source: "facebook" }),
+    ];
+    const result = deduplicateReviews(reviews);
+    expect(result.length).toBe(1);
+    expect(result[0].source).toBeUndefined();
+  });
+
+  it("matches on author + content regardless of whitespace/case", () => {
+    const reviews = [
+      makeReview({
+        author: "Jane Doe",
+        content: "Great service, would use again!",
+        source: "facebook",
+      }),
+      makeReview({
+        author: "  JANE   DOE  ",
+        content: "great service,  would use AGAIN!",
+        source: "trustpilot",
+      }),
+    ];
+    const result = deduplicateReviews(reviews);
+    expect(result.length).toBe(1);
+    expect(result[0].source).toBe("trustpilot");
+  });
+
+  it("does not collapse reviews with different authors", () => {
+    const reviews = [
+      makeReview({ author: "Alice", source: "facebook" }),
+      makeReview({ author: "Bob", source: "trustpilot" }),
+    ];
+    expect(deduplicateReviews(reviews).length).toBe(2);
+  });
+
+  it("does not collapse different reviews from the same author", () => {
+    const reviews = [
+      makeReview({ author: "Alice", content: "Loved the team", source: "google" }),
+      makeReview({
+        author: "Alice",
+        content: "Came back a year later, still great",
+        source: "trustpilot",
+      }),
+    ];
+    expect(deduplicateReviews(reviews).length).toBe(2);
+  });
+
+  it("handles an empty list", () => {
+    expect(deduplicateReviews([])).toEqual([]);
   });
 });

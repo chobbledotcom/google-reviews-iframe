@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { filter, map, pipe, sort } from "#toolkit/fp/index.js";
-import { CONFIG, loadConfig } from "./lib/shared.js";
+import { CONFIG, deduplicateReviews, loadConfig } from "./lib/shared.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, "..");
@@ -36,6 +36,7 @@ function loadReviews(businessSlug) {
     filter(isJsonFile),
     map(parseReviewFile(businessDir)),
     filter(isNotNull),
+    deduplicateReviews,
     sort(byDateDesc),
   )(fs.readdirSync(businessDir));
 }

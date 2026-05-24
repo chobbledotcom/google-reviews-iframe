@@ -67,8 +67,8 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched_test-success": null,
-    "last_fetched_google": null,
-    "last_fetched_facebook": null,
-    "last_fetched_trustpilot": null
+    "last_fetched_google": "2026-05-24 20:59:31",
+    "last_fetched_facebook": "2026-05-24 20:59:56",
+    "last_fetched_trustpilot": "2026-05-24 21:01:07"
   }
 ]

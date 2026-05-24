@@ -57,5 +57,18 @@
     "last_fetched_google": "2026-05-24 10:27:54",
     "last_fetched_facebook": "2026-05-24 10:28:49",
     "last_fetched_trustpilot": "2026-05-24 10:29:23"
+  },
+  {
+    "google_business_id": "ChIJJ6zGbivlHEsR0s4fK7TIwu0",
+    "facebook_page_url": "https://www.facebook.com/RenSolarManchester/",
+    "trustpilot_url": "https://www.trustpilot.com/review/renegade-solar.co.uk",
+    "slug": "renegade-solar",
+    "number_of_reviews": -1,
+    "minimum_star_rating": 0,
+    "fetch_frequency_days": 7,
+    "last_fetched_test-success": null,
+    "last_fetched_google": null,
+    "last_fetched_facebook": null,
+    "last_fetched_trustpilot": null
   }
 ]

@@ -70,5 +70,16 @@
     "last_fetched_google": "2026-06-01 14:54:06",
     "last_fetched_facebook": "2026-06-01 14:54:27",
     "last_fetched_trustpilot": "2026-06-01 14:54:34"
+  },{
+    "google_business_id": "ChIJ4WZyzN5EdEgRG3WT17enaPs",
+    "facebook_page_url": "https://www.facebook.com/monstereventhire",
+    "trustpilot_url": "https://www.trustpilot.com/review/monstereventhire.co.uk",
+    "slug": "monster-event-hire",
+    "number_of_reviews": -1,
+    "minimum_star_rating": 4,
+    "fetch_frequency_days": 7,
+    "last_fetched_google": null,
+    "last_fetched_facebook": null,
+    "last_fetched_trustpilot": null
   }
 ]

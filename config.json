@@ -79,8 +79,8 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 4,
     "fetch_frequency_days": 7,
-    "last_fetched_google": "2026-06-04 15:12:18",
-    "last_fetched_facebook": "2026-06-04 15:12:25",
-    "last_fetched_trustpilot": "2026-06-04 15:12:38"
+    "last_fetched_google": "2026-06-12 10:30:20",
+    "last_fetched_facebook": "2026-06-12 10:30:28",
+    "last_fetched_trustpilot": "2026-06-12 10:33:05"
   }
 ]

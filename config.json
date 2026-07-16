@@ -7,7 +7,7 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched": "2026-01-16 10:34:35",
-    "last_fetched_google": "2026-07-08 10:58:10",
+    "last_fetched_google": "2026-07-16 10:52:08",
     "last_fetched_test-success": "2026-04-16 13:41:55"
   },
   {
@@ -17,8 +17,8 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
-    "last_fetched_google": "2026-07-08 10:58:17",
-    "last_fetched_facebook": "2026-07-08 11:01:20",
+    "last_fetched_google": "2026-07-16 10:53:10",
+    "last_fetched_facebook": "2026-07-16 10:54:25",
     "last_fetched_test-success": "2026-04-16 13:41:55"
   },
   {
@@ -29,7 +29,7 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched": "2026-01-12 09:27:21",
-    "last_fetched_google": "2026-07-08 10:58:26",
+    "last_fetched_google": "2026-07-16 10:53:21",
     "last_fetched_test-success": "2026-04-16 13:41:55"
   },
   {
@@ -40,7 +40,7 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
-    "last_fetched_google": "2026-07-08 10:58:33",
+    "last_fetched_google": "2026-07-16 10:53:29",
     "last_fetched_facebook": "2026-07-14 10:41:20",
     "last_fetched_trustpilot": "2026-07-14 10:43:13",
     "last_fetched_test-success": "2026-04-16 13:41:55"
@@ -54,9 +54,9 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched_test-success": "2026-04-16 13:41:55",
-    "last_fetched_google": "2026-07-08 10:58:40",
-    "last_fetched_facebook": "2026-07-08 11:01:28",
-    "last_fetched_trustpilot": "2026-07-08 11:02:31"
+    "last_fetched_google": "2026-07-16 10:53:36",
+    "last_fetched_facebook": "2026-07-16 10:54:33",
+    "last_fetched_trustpilot": "2026-07-16 10:55:12"
   },
   {
     "google_business_id": "ChIJJ6zGbivlHEsR0s4fK7TIwu0",
@@ -67,9 +67,9 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched_test-success": null,
-    "last_fetched_google": "2026-07-08 11:00:28",
-    "last_fetched_facebook": "2026-07-08 11:01:59",
-    "last_fetched_trustpilot": "2026-07-08 11:03:05"
+    "last_fetched_google": "2026-07-16 10:53:44",
+    "last_fetched_facebook": "2026-07-16 10:54:49",
+    "last_fetched_trustpilot": "2026-07-16 10:55:46"
   },
   {
     "google_business_id": "ChIJ4WZyzN5EdEgRG3WT17enaPs",

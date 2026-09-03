@@ -94,5 +94,14 @@
     "last_fetched_google": "2026-08-31 16:36:37",
     "last_fetched_facebook": "2026-08-31 16:39:15",
     "last_fetched_trustpilot": null
+  },
+  {
+    "source": "google",
+    "google_business_id": "ChIJpQEPFGICdkgRkPnm-SNNMM0",
+    "slug": "dancing-cubs",
+    "number_of_reviews": -1,
+    "minimum_star_rating": 0,
+    "fetch_frequency_days": 7,
+    "last_fetched_google": "2026-09-03 04:23:23"
   }
 ]

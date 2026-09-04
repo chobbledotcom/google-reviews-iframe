@@ -41,8 +41,8 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched_google": "2026-08-30 14:13:42",
-    "last_fetched_facebook": "2026-08-27 19:23:33",
-    "last_fetched_trustpilot": "2026-08-27 19:25:04",
+    "last_fetched_facebook": "2026-09-04 13:04:58",
+    "last_fetched_trustpilot": "2026-09-04 13:07:46",
     "last_fetched_test-success": "2026-04-16 13:41:55"
   },
   {
@@ -81,7 +81,7 @@
     "fetch_frequency_days": 7,
     "last_fetched_google": "2026-09-02 13:08:58",
     "last_fetched_facebook": "2026-09-02 13:09:03",
-    "last_fetched_trustpilot": "2026-08-27 19:26:07"
+    "last_fetched_trustpilot": "2026-09-04 13:07:52"
   },
   {
     "google_business_id": "ChIJsfWUaN_dakgRDUnAkRzN9Kc",

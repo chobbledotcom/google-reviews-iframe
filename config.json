@@ -7,7 +7,7 @@
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
     "last_fetched": "2026-01-16 10:34:35",
-    "last_fetched_google": "2026-09-14 15:33:38",
+    "last_fetched_google": "2026-09-22 13:49:38",
     "last_fetched_test-success": "2026-04-16 13:41:55"
   },
   {
@@ -17,7 +17,7 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 0,
     "fetch_frequency_days": 7,
-    "last_fetched_google": "2026-09-14 15:33:51",
+    "last_fetched_google": "2026-09-22 13:49:54",
     "last_fetched_facebook": "2026-09-15 14:05:13",
     "last_fetched_test-success": "2026-04-16 13:41:55"
   },

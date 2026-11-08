@@ -87,6 +87,10 @@ function renderStars(rating) {
 }
 
 function renderRating(review) {
+  // Imported website testimonials have no external star rating.
+  if (review.source === "testimonial") {
+    return "";
+  }
   // For Facebook, show "Recommends" badge
   if (review.source === "facebook") {
     return review.rating === 5
@@ -125,7 +129,6 @@ function applyReviewRules(reviews, business) {
           ...review,
           content,
           author: anonymiseAuthor(review.author),
-          authorUrl: "",
         }
       : { ...review, content };
   });
@@ -133,9 +136,17 @@ function applyReviewRules(reviews, business) {
 
 function renderReviewCard(review) {
   const initials = getInitials(review.author);
-  const authorLink = review.authorUrl
-    ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${review.author}</a>`
-    : review.author;
+  const sourceLabels = {
+    google: "Google review",
+    facebook: "Facebook review",
+    trustpilot: "Trustpilot review",
+    testimonial: "Website testimonial",
+  };
+  const sourceLabel = sourceLabels[review.source] || "Review";
+  const sourceLink =
+    review.source !== "testimonial" && review.authorUrl
+      ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${sourceLabel}</a>`
+      : sourceLabel;
 
   // Use thumbnail image if available, otherwise fall back to initials
   let avatarContent = initials;
@@ -149,9 +160,10 @@ function renderReviewCard(review) {
         <div class="review-header">
           <div class="review-avatar">${avatarContent}</div>
           <div class="review-info">
-            <div class="review-author">${authorLink}</div>
+            <div class="review-author">${review.author}</div>
             <div class="review-meta">
               ${renderRating(review)}
+              ${sourceLink}
               <span class="review-date">${formatDate(review.date)}</span>
             </div>
           </div>

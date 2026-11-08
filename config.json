@@ -103,5 +103,13 @@
     "minimum_star_rating": 4,
     "fetch_frequency_days": 7,
     "last_fetched_google": "2026-11-07 15:18:47"
+  },
+  {
+    "google_business_id": "ChIJjb4Jm6V7iEgRtp80bFEWa74",
+    "slug": "usb-events",
+    "number_of_reviews": -1,
+    "minimum_star_rating": 0,
+    "fetch_frequency_days": 7,
+    "last_fetched_google": "2026-11-08 04:29:29"
   }
 ]

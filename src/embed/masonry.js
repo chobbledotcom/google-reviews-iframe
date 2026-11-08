@@ -1,58 +1,14 @@
 /**
- * Masonry layout using @chenglou/pretext for height prediction.
+ * Masonry layout using real card measurements.
  *
- * This bypasses DOM reflowing entirely -- card heights are predicted
- * from font metrics alone (via OffscreenCanvas), then positions are
- * computed with the greedy shortest-column algorithm from pretext-masonry.
- *
- * Zero reflows. Zero offsetHeight reads. Just math.
+ * Cards are given their final width first, then their actual height is
+ * measured. Fixed "chrome height" predictions drift when the card layout
+ * changes (source links, extra badges, imported testimonials), leaving
+ * small gaps between cards in a column.
  */
-import { layout, prepare } from "@chenglou/pretext";
 
 const GAP = 20;
 const MOBILE_BREAKPOINT = 601;
-
-// Match the font stack and sizing from iframe-layout.html
-const CONTENT_FONT =
-  '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
-const CONTENT_LINE_HEIGHT = 25.6; // 16px * 1.6 (line-height: 1.6 on .review-content)
-
-// Fixed heights for card chrome (header, padding, gaps)
-const CARD_PADDING = 20;
-const CARD_PADDING_SIDE = 20;
-const HEADER_HEIGHT = 48; // .review-header height
-const HEADER_MARGIN_BOTTOM = 15;
-const BORDER_WIDTH = 1; // 1px solid border on all sides
-const CARD_CHROME_HEIGHT =
-  CARD_PADDING +
-  HEADER_HEIGHT +
-  HEADER_MARGIN_BOTTOM +
-  CARD_PADDING +
-  BORDER_WIDTH * 2; // top + bottom border
-
-/**
- * Predict text height using pretext font metrics.
- * Ported from pretext-masonry/src/heightPredictor.ts
- */
-function predictTextHeight(text, contentWidth) {
-  const prepared = prepare(text, CONTENT_FONT);
-  const result = layout(prepared, contentWidth, CONTENT_LINE_HEIGHT);
-  return result.height;
-}
-
-/**
- * Predict a single card's height using pretext font metrics.
- */
-function predictCardHeight(textContent, availableWidth) {
-  const contentWidth = availableWidth - CARD_PADDING_SIDE * 2 - BORDER_WIDTH * 2; // left + right border
-  let totalHeight = CARD_CHROME_HEIGHT;
-
-  if (textContent?.trim()) {
-    totalHeight += predictTextHeight(textContent, contentWidth);
-  }
-
-  return totalHeight;
-}
 
 /**
  * Find the index of the shortest column.
@@ -107,18 +63,17 @@ function layoutMasonry() {
   const colCount = getColumnCount(containerWidth);
   const colWidth = (containerWidth - GAP * (colCount - 1)) / colCount;
 
-  // Predict all card heights using pretext -- zero DOM measurement
-  const heights = Array.from(cards, (card) => {
-    const contentEl = card.querySelector(".review-content");
-    const text = contentEl ? contentEl.textContent || "" : "";
-    return predictCardHeight(text, colWidth);
-  });
+  // Set widths before measuring so text wraps at the final column width.
+  for (const card of cards) card.style.width = `${colWidth}px`;
+
+  // Measure the real card height. This is one read pass and avoids the
+  // prediction drift that left columns slightly out of alignment.
+  const heights = Array.from(cards, (card) => card.getBoundingClientRect().height);
 
   const result = computeMasonryLayout(heights, colCount, colWidth, GAP);
 
-  // Batch write: set all positions and widths in one pass (single paint, zero reflow)
+  // Batch write positions after measuring.
   for (let i = 0; i < cards.length; i++) {
-    cards[i].style.width = `${colWidth}px`;
     cards[i].style.transform =
       `translate(${result.positions[i].x}px,${result.positions[i].y}px)`;
   }

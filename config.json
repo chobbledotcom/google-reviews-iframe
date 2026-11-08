@@ -112,20 +112,6 @@
     "minimum_star_rating": 4,
     "fetch_frequency_days": 7,
     "reviewer_name_style": "initial",
-    "redact_review_patterns": [
-      {
-        "match": "Kaleigh, you were",
-        "replace": "You were"
-      },
-      {
-        "match": "Kayleigh",
-        "replace": "The team"
-      },
-      {
-        "match": "Kaleigh",
-        "replace": "the team"
-      }
-    ],
     "last_fetched_google": "2026-11-08 04:29:29",
     "last_fetched_facebook": "2026-11-08 04:32:56"
   }

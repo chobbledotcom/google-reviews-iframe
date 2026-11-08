@@ -50,8 +50,20 @@ const formatRelativeTime = (diffDays) => {
     { threshold: 0, label: "Today" },
     { threshold: 1, label: "Yesterday" },
     { threshold: 7, calc: (d) => `${d} days ago` },
-    { threshold: 30, calc: (d) => `${Math.floor(d / 7)} weeks ago` },
-    { threshold: 365, calc: (d) => `${Math.floor(d / 30)} months ago` },
+    {
+      threshold: 30,
+      calc: (d) => {
+        const weeks = Math.floor(d / 7);
+        return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
+      },
+    },
+    {
+      threshold: 365,
+      calc: (d) => {
+        const months = Math.floor(d / 30);
+        return months === 1 ? "1 month ago" : `${months} months ago`;
+      },
+    },
   ];
 
   for (const unit of units) {
@@ -60,7 +72,8 @@ const formatRelativeTime = (diffDays) => {
     }
   }
   // More than a year
-  return `${Math.floor(diffDays / 365)} years ago`;
+  const years = Math.floor(diffDays / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
 };
 
 const formatDate = (dateString) => {
@@ -136,17 +149,15 @@ function applyReviewRules(reviews, business) {
 
 function renderReviewCard(review) {
   const initials = getInitials(review.author);
-  const sourceLabels = {
-    google: "Google review",
-    facebook: "Facebook review",
-    trustpilot: "Trustpilot review",
-    testimonial: "Website testimonial",
-  };
-  const sourceLabel = sourceLabels[review.source] || "Review";
-  const sourceLink =
+  const sourceLabel =
+    review.source === "testimonial"
+      ? '<span class="review-date">Website testimonial</span>'
+      : "";
+  const dateText = formatDate(review.date);
+  const dateHtml =
     review.source !== "testimonial" && review.authorUrl
-      ? `<a href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${sourceLabel}</a>`
-      : sourceLabel;
+      ? `<a class="review-date" href="${review.authorUrl}" target="_blank" rel="noopener noreferrer">${dateText}</a>`
+      : `<span class="review-date">${dateText}</span>`;
 
   // Use thumbnail image if available, otherwise fall back to initials
   let avatarContent = initials;
@@ -163,8 +174,8 @@ function renderReviewCard(review) {
             <div class="review-author">${review.author}</div>
             <div class="review-meta">
               ${renderRating(review)}
-              ${sourceLink}
-              <span class="review-date">${formatDate(review.date)}</span>
+              ${sourceLabel}
+              ${dateHtml}
             </div>
           </div>
         </div>

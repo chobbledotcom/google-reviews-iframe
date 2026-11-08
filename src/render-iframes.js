@@ -98,32 +98,37 @@ function renderRating(review) {
 }
 
 const COMPANY_PATTERN =
-  /\b(ltd|limited|solicitors?|community|events?|group|company|school|academy|centre|center|hotel|hall|council|association|services?|hire|church|club|charity|foodbank|nursery|primary|high school|festival|trust|partnership|studios?|media|solutions?)\b/i;
+  /\b(ltd|limited|solicitors?|community|events?|group|company|school|academy|centre|center|hotel|hall|council|association|services?|hire|church|club|charity|foodbank|nursery|primary|high school|festival|trust|partnership|studios?|media|solutions?|with|and|of|the|&)\b/i;
 
 // Private reviewers are attributed as "Firstname S." per the client style
-// guide. Only two-word personal names are shortened; single-word pseudonyms
-// and 3+ word company/community names are left alone.
+// guide. Single-word pseudonyms and company/community names are left alone.
 function anonymiseAuthor(name) {
   const parts = (name || "").trim().split(/\s+/);
-  if (parts.length !== 2 || COMPANY_PATTERN.test(name)) return name;
-  return `${parts[0]} ${parts[1][0].toUpperCase()}.`;
+  if (parts.length < 2 || COMPANY_PATTERN.test(name)) return name;
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
+
+function redactContent(content, business) {
+  return (business.redact_review_patterns || []).reduce(
+    (text, { match, replace }) =>
+      text.replace(new RegExp(match, "gi"), replace),
+    content || "",
+  );
 }
 
 function applyReviewRules(reviews, business) {
-  const excluded = (business.exclude_review_terms || []).map((term) =>
-    term.toLowerCase(),
-  );
   const anonymise = business.reviewer_name_style === "initial";
-  return reviews
-    .filter((review) => {
-      const haystack = `${review.author || ""} ${review.content || ""}`.toLowerCase();
-      return !excluded.some((term) => haystack.includes(term));
-    })
-    .map((review) =>
-      anonymise
-        ? { ...review, author: anonymiseAuthor(review.author), authorUrl: "" }
-        : review,
-    );
+  return reviews.map((review) => {
+    const content = redactContent(review.content, business);
+    return anonymise
+      ? {
+          ...review,
+          content,
+          author: anonymiseAuthor(review.author),
+          authorUrl: "",
+        }
+      : { ...review, content };
+  });
 }
 
 function renderReviewCard(review) {

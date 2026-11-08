@@ -589,6 +589,7 @@ const SOURCE_PRIORITY = {
   trustpilot: 3,
   google: 2,
   facebook: 1,
+  testimonial: 0.5,
 };
 
 // Reviews stored before the `source` field existed were all Google.

@@ -111,6 +111,8 @@
     "number_of_reviews": -1,
     "minimum_star_rating": 4,
     "fetch_frequency_days": 7,
+    "reviewer_name_style": "initial",
+    "exclude_review_terms": ["Kaleigh", "Kayleigh"],
     "last_fetched_google": "2026-11-08 04:29:29",
     "last_fetched_facebook": "2026-11-08 04:32:56"
   }

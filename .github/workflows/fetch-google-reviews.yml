@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      deployments: write
 
     steps:
       - name: Checkout repository
@@ -133,19 +134,15 @@ jobs:
             rsync -av images/reviewers/ deploy/images/reviewers/
           fi
 
-      - name: Deploy to Bunny
-        uses: R-J-dev/bunny-deploy@v2.0.6
+      - name: Deploy to Bunny CDN
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: BunnyWay/actions/deploy-site@deploy-site_0.1.1
         with:
-          access-key: ${{ secrets.BUNNY_ACCESS_KEY }}
-          directory-to-upload: deploy
-          storage-endpoint: "https://storage.bunnycdn.com"
-          storage-zone-name: "reviews-embeds"
-          storage-zone-password: ${{ secrets.BUNNY_STORAGE_ZONE_PASSWORD }}
-          concurrency: "5"
-          enable-delete-action: true
-          enable-purge-pull-zone: true
-          pull-zone-id: "4850634"
-          replication-timeout: "15000"
+          site: reviews-embeds
+          directory: deploy
+          api_key: ${{ secrets.BUNNY_ACCESS_KEY }}
+          cli_version: "0.19"
+          deployments: true
 
   notify-failure:
     name: Notify on Failure

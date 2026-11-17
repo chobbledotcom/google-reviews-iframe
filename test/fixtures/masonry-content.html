@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Masonry content fixture</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+      }
+      .masonry-container {
+        position: relative;
+        width: 100%;
+      }
+      .masonry-container .review-card {
+        position: absolute;
+        visibility: hidden;
+      }
+      .masonry-container.masonry-ready .review-card {
+        visibility: visible;
+      }
+      .review-card {
+        padding: 20px;
+        border: 1px solid #e1e5e9;
+      }
+      .review-header {
+        height: 48px;
+        margin-bottom: 15px;
+      }
+      .review-content {
+        overflow-wrap: break-word;
+      }
+      .review-content .big {
+        font-size: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reviews-container">
+      <div class="masonry-container">
+        <!-- Line breaks: the original overlap bug -->
+        <div class="review-card" data-case="br">
+          <div class="review-header">Line breaks</div>
+          <div class="review-content">Amazing food<br>Great choice<br>Service is always excellent<br>Would come again</div>
+        </div>
+        <div class="review-card" data-case="double-br">
+          <div class="review-header">Blank lines</div>
+          <div class="review-content">First paragraph of the review.<br><br>Second paragraph after a blank line.<br><br><br>Third, after two blank lines.<br></div>
+        </div>
+        <div class="review-card" data-case="plain">
+          <div class="review-header">Plain</div>
+          <div class="review-content">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</div>
+        </div>
+        <div class="review-card" data-case="source-newlines">
+          <div class="review-header">Newlines in source</div>
+          <div class="review-content">Ethical dev.
+
+I hardly ever write reviews.
+
+But this one deserved it.</div>
+        </div>
+        <div class="review-card" data-case="inline">
+          <div class="review-header">Inline markup</div>
+          <div class="review-content">Really <b>brilliant</b> service from <a href="#">the whole team</a>, and <em>very</em> good value for what we paid on the day.</div>
+        </div>
+        <div class="review-card" data-case="blocks">
+          <div class="review-header">Block markup</div>
+          <div class="review-content"><p>A paragraph element.</p><p>Another paragraph element with enough words to wrap onto a second line in a narrow column.</p><ul><li>One</li><li>Two</li></ul></div>
+        </div>
+        <div class="review-card" data-case="unpredictable">
+          <div class="review-header">Not predictable from text</div>
+          <div class="review-content">Normal text <span class="big">then much larger text that pretext cannot know about</span> and an image <img alt="" width="40" height="90" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></div>
+        </div>
+        <div class="review-card" data-case="emoji">
+          <div class="review-header">Emoji</div>
+          <div class="review-content">Halloumi soft 🌮 tacos and a berry smoothie 🍓🥤 — also the staff are lovely 😀👍🏽 would recommend ⭐⭐⭐⭐⭐</div>
+        </div>
+        <div class="review-card" data-case="empty">
+          <div class="review-header">Empty</div>
+          <div class="review-content"></div>
+        </div>
+        <div class="review-card" data-case="long-word">
+          <div class="review-header">Long word</div>
+          <div class="review-content">Supercalifragilisticexpialidocious-Supercalifragilisticexpialidocious-Supercalifragilisticexpialidocious https://example.com/a/very/long/url/that/does/not/have/any/spaces/in/it/at/all</div>
+        </div>
+        <div class="review-card" data-case="no-content">
+          <div class="review-header">No content element</div>
+        </div>
+      </div>
+    </div>
+    <script src="/dist/masonry.js"></script>
+  </body>
+</html>

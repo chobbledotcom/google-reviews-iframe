@@ -216,11 +216,12 @@ function generateHtml(reviews) {
   const reviewsHtml = generateReviewsHtml(reviews);
 
   // Replace placeholders
-  let html = template.replace("{{REVIEWS_HTML}}", reviewsHtml);
-  html = html.replace("{{MASONRY_SCRIPT}}", masonryScript);
-  html = html.replace("{{IFRAME_RESIZER_SCRIPT}}", childScript);
-
-  return html;
+  // Replacer functions, not strings: a string replacement would interpret
+  // "$&", "$$" etc. inside the scripts or review text as substitution patterns.
+  return template
+    .replace("{{REVIEWS_HTML}}", () => reviewsHtml)
+    .replace("{{MASONRY_SCRIPT}}", () => masonryScript)
+    .replace("{{IFRAME_RESIZER_SCRIPT}}", () => childScript);
 }
 
 function generateEmbedCode(businessSlug) {
